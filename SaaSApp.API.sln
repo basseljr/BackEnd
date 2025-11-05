@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.10.35027.167
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SaaSApp.API", "SaaSApp.API\SaaSApp.API.csproj", "{37A6C304-9660-4A99-945D-3CEA7E4D739B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Infrastructure", "Infrastructure\Infrastructure.csproj", "{A9FFE167-E73A-4CFE-8850-3CB53E2AFE9A}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{37A6C304-9660-4A99-945D-3CEA7E4D739B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{37A6C304-9660-4A99-945D-3CEA7E4D739B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{37A6C304-9660-4A99-945D-3CEA7E4D739B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{37A6C304-9660-4A99-945D-3CEA7E4D739B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A9FFE167-E73A-4CFE-8850-3CB53E2AFE9A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A9FFE167-E73A-4CFE-8850-3CB53E2AFE9A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A9FFE167-E73A-4CFE-8850-3CB53E2AFE9A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A9FFE167-E73A-4CFE-8850-3CB53E2AFE9A}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {945D94FF-75BE-4C0C-A3FE-B3337AF6FBDF}
+	EndGlobalSection
+EndGlobal
