@@ -1,10 +1,11 @@
-﻿using Microsoft.EntityFrameworkCore;
-using SaaSApp.API.DTOs;
+﻿using Application.DTOs;
+using Microsoft.EntityFrameworkCore;
 using SaaSApp.Infrastructure.Data;
+using Application.Interfaces;
 
-namespace SaaSApp.API.Services
+namespace SaaSApp.Infrastructure.Services
 {
-    public class TemplateService
+    public class TemplateService : ITemplateService
     {
         private readonly AppDbContext _context;
 
@@ -13,7 +14,7 @@ namespace SaaSApp.API.Services
             _context = context;
         }
 
-        public async Task<IEnumerable<TemplateDto>> GetAllTemplatesAsync()
+        public async Task<IEnumerable<TemplateDto>> GetAllAsync()
         {
             return await _context.Templates
                 .Select(t => new TemplateDto
@@ -28,7 +29,7 @@ namespace SaaSApp.API.Services
                 .ToListAsync();
         }
 
-        public async Task<TemplateDto?> GetTemplateByIdAsync(int id)
+        public async Task<TemplateDto?> GetByIdAsync(int id)
         {
             return await _context.Templates
                 .Where(t => t.Id == id)

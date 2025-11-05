@@ -1,8 +1,6 @@
-﻿using Infrastructure.Models;
+﻿using Application.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using SaaSApp.API.DTOs;
-using SaaSApp.API.Services;
 using SaaSApp.Infrastructure.Data;
 
 namespace SaaSApp.API.Controllers
@@ -11,24 +9,25 @@ namespace SaaSApp.API.Controllers
     [Route("[controller]")]
     public class TemplatesController : ControllerBase
     {
-        private readonly TemplateService _templateService;
-        public TemplatesController(TemplateService templateService)
+        private readonly ITemplateService _templateService;
+        public TemplatesController(ITemplateService templateService)
         {
             _templateService = templateService;
         }
 
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<TemplateDto>>> GetTemplates()
+        [HttpGet]
+        public async Task<IActionResult> GetAll()
         {
-            var templates = await _templateService.GetAllTemplatesAsync();
+            var templates = await _templateService.GetAllAsync();
             return Ok(templates);
         }
 
         [HttpGet("{id}")]
-        public async Task<ActionResult<TemplateDto>> GetTemplate(int id)
+        public async Task<IActionResult> GetTemplate(int id)
         {
-            var template = await _templateService.GetTemplateByIdAsync(id);                       
+            var template = await _templateService.GetByIdAsync(id);                       
 
             if (template == null)
                 return NotFound();

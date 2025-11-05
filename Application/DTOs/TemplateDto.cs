@@ -1,4 +1,4 @@
-﻿namespace SaaSApp.API.DTOs
+﻿namespace Application.DTOs
 {
     public class TemplateDto
     {

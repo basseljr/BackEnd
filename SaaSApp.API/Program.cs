@@ -1,15 +1,15 @@
+using Application.Interfaces;
 using Microsoft.EntityFrameworkCore;
-using SaaSApp.API.Services;
 using SaaSApp.Infrastructure.Data;
+using SaaSApp.Infrastructure.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
 
 builder.Services.AddControllers();
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
-builder.Services.AddScoped<TemplateService>();
+builder.Services.AddScoped<ITemplateService, TemplateService>();
 
 
 builder.Services.AddCors(options =>

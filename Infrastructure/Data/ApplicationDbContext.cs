@@ -1,4 +1,4 @@
-﻿using Infrastructure.Models;
+﻿using Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace SaaSApp.Infrastructure.Data
