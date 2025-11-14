@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using SaaSApp.Infrastructure.Data;
 using Application.Interfaces;
+using Domain.Entities;
 
 namespace SaaSApp.Infrastructure.Services
 {
@@ -44,5 +45,17 @@ namespace SaaSApp.Infrastructure.Services
                 })
                 .FirstOrDefaultAsync();
         }
+
+        public async Task<Template?> GetBySlugAsync(string slug)
+        {
+            return await _context.Templates.FirstOrDefaultAsync(t => t.Slug == slug);
+        }
+
+        public async Task UpdateAsync(Template template)
+        {
+            _context.Templates.Update(template);
+            await _context.SaveChangesAsync();
+        }
+
     }
 }

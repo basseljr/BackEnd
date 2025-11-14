@@ -1,4 +1,5 @@
 ﻿using Application.DTOs;
+using Domain.Entities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,5 +12,9 @@ namespace Application.Interfaces
     {
         Task<IEnumerable<TemplateDto>> GetAllAsync();
         Task<TemplateDto> GetByIdAsync(int id);
+        Task<Template?> GetBySlugAsync(string slug);
+        Task UpdateAsync(Template template);
+
+
     }
 }
