@@ -72,6 +72,34 @@ namespace SaaSApp.API.Controllers
         }
 
 
+        [HttpGet("domainproduction")]
+        public async Task<IActionResult> GetByDomainforproduction()
+        {
+            var host = Request.Host.Host.ToLower();       // e.g. client1.aiw.com
+            var subdomain = host.Split('.')[0];           // "client1"
+
+            var template = await _templateService.GetBySubdomainAsync(subdomain);
+            if (template == null)
+                return NotFound(new { message = "Subdomain not found" });
+
+            return Ok(new
+            {
+                slug = template.Slug,
+                name = template.Name,
+                customizationData = template.CustomizationData
+            });
+        }
+
+        [HttpGet("domain")]
+        public async Task<IActionResult> GetByDomain([FromQuery] string domain)
+        {
+            var template = await _templateService.GetBySubdomainAsync(domain);
+            if (template == null) return NotFound();
+            return Ok(template);
+        }
+
+
+
 
 
     }

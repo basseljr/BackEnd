@@ -14,6 +14,8 @@ namespace Application.Interfaces
         Task<TemplateDto> GetByIdAsync(int id);
         Task<Template?> GetBySlugAsync(string slug);
         Task UpdateAsync(Template template);
+        Task<Template?> GetBySubdomainAsync(string subdomain);
+
 
 
     }
