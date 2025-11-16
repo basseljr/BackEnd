@@ -57,5 +57,11 @@ namespace SaaSApp.Infrastructure.Services
             await _context.SaveChangesAsync();
         }
 
+        public async Task<Template?> GetBySubdomainAsync(string subdomain)
+        {
+            return await _context.Templates.FirstOrDefaultAsync(t => t.Subdomain == subdomain);
+        }
+
+
     }
 }

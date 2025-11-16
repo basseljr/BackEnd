@@ -12,13 +12,26 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 builder.Services.AddScoped<ITemplateService, TemplateService>();
 
 
+//builder.Services.AddCors(options =>
+//{
+//    options.AddPolicy("AllowAngular", policy =>
+//    {
+//        policy.WithOrigins("http://localhost:4200")
+//              .AllowAnyHeader()
+//              .AllowAnyMethod();
+//    });
+//});
+
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowAngular", policy =>
+    options.AddPolicy("AllowLocalhostSubdomains", policy =>
     {
-        policy.WithOrigins("http://localhost:4200")
-              .AllowAnyHeader()
-              .AllowAnyMethod();
+        policy
+            .SetIsOriginAllowed(origin =>
+                new Uri(origin).Host.EndsWith("localhost"))
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+            .AllowCredentials();
     });
 });
 
@@ -34,7 +47,10 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseCors("AllowAngular");
+//app.UseCors("AllowAngular");
+
+app.UseCors("AllowLocalhostSubdomains");
+
 
 app.UseAuthorization();
 

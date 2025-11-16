@@ -15,6 +15,8 @@ namespace Domain.Entities
         public string DemoUrl { get; set; } = string.Empty;    
         public string Category { get; set; } = string.Empty;
         public string Slug { get; set; } = string.Empty;
-        public string? CustomizationData { get; set; } 
+        public string? CustomizationData { get; set; }
+        public string? Subdomain { get; set; }
+        public bool IsPublished { get; set; } = false;
     }
 }
