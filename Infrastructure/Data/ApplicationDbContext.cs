@@ -8,6 +8,12 @@ namespace SaaSApp.Infrastructure.Data
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
         public DbSet<User> Users { get; set; }
         public DbSet<Template> Templates { get; set; }
+        public DbSet<Category> Categories { get; set; }
+        public DbSet<Item> Items { get; set; }
+        public DbSet<Order> Orders { get; set; }
+        public DbSet<OrderItem> OrderItems { get; set; }
+
+
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -33,6 +39,24 @@ namespace SaaSApp.Infrastructure.Data
                     Category = "Food & Drink"
                 }
             );
+
+           modelBuilder.Entity<Category>()
+              .HasOne(c => c.Template)
+              .WithMany()
+              .HasForeignKey(c => c.TemplateId)
+              .OnDelete(DeleteBehavior.Cascade);
+
+           modelBuilder.Entity<Item>()
+                .HasOne(i => i.Category)
+                .WithMany(c => c.Items)
+                .HasForeignKey(i => i.CategoryId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<OrderItem>()
+                .HasOne(o => o.Order)
+                .WithMany(p => p.Items)
+                .HasForeignKey(o => o.OrderId)
+                .OnDelete(DeleteBehavior.Cascade);
         }
 
 

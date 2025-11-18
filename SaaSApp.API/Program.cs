@@ -1,4 +1,5 @@
 using Application.Interfaces;
+using Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using SaaSApp.Infrastructure.Data;
 using SaaSApp.Infrastructure.Services;
@@ -10,6 +11,10 @@ builder.Services.AddControllers();
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 builder.Services.AddScoped<ITemplateService, TemplateService>();
+builder.Services.AddScoped<ICategoryService, CategoryService>();
+builder.Services.AddScoped<IItemService, ItemService>();
+builder.Services.AddScoped<IOrderService, OrderService>();
+
 
 
 //builder.Services.AddCors(options =>
