@@ -25,6 +25,15 @@ namespace SaaSApp.API.Controllers
             return Ok(new { orderId, message = "Order placed successfully" });
         }
 
+
+        [HttpGet("all")]
+        public async Task<IActionResult> GetAllOrders()
+        {
+            var orders = await _orderService.GetAllAsync();
+            return Ok(orders);
+        }
+
+
         [HttpGet("{id}")]
         public async Task<IActionResult> GetOrder(int id)
         {
@@ -44,6 +53,22 @@ namespace SaaSApp.API.Controllers
             var orders = await _orderService.GetByCustomerMobileAsync(mobile);
             return Ok(orders);
         }
+
+        [HttpPut("{id}/status")]
+        public async Task<IActionResult> UpdateOrderStatus(int id, [FromBody] UpdateOrderStatusRequest request)
+        {
+            var success = await _orderService.UpdateOrderStatusAsync(id, request.Status);
+            if (!success)
+                return NotFound(new { message = "Order not found" });
+
+            return Ok(new { message = "Order status updated successfully" });
+        }
+
+        public class UpdateOrderStatusRequest
+        {
+            public string Status { get; set; } = string.Empty;
+        }
+
 
     }
 }

@@ -1,5 +1,5 @@
 ﻿using Application.DTOs;
-using Application.Interfaces;
+using Domain.Entities;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SaaSApp.Infrastructure.Data;
@@ -32,6 +32,12 @@ namespace SaaSApp.API.Controllers
             return Ok(categories);
         }
 
+        [HttpGet]
+        public async Task<IActionResult> GetAll()
+        {
+            var categories = await _context.Categories.ToListAsync();
+            return Ok(categories);
+        }
 
         [HttpGet("{id}")]
         public async Task<IActionResult> Get(int id)
@@ -41,6 +47,65 @@ namespace SaaSApp.API.Controllers
                 return NotFound();
 
             return Ok(category);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> Create([FromBody] Category category)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+            try
+            {
+                _context.Categories.Add(category);
+                await _context.SaveChangesAsync();
+            }
+            catch (Exception ex) {
+                throw;
+            }
+            return Ok(category);
+        }
+
+        [HttpPut("{id}")]
+        public async Task<IActionResult> Update(int id, [FromBody] Category updatedCategory)
+        {
+            var category = await _context.Categories.FindAsync(id);
+            if (category == null)
+                return NotFound();
+
+            category.Name = updatedCategory.Name;
+            category.ImageUrl = updatedCategory.ImageUrl;
+            category.TemplateId = updatedCategory.TemplateId;
+
+            await _context.SaveChangesAsync();
+            return Ok(category);
+        }
+
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> Delete(int id)
+        {
+            var category = await _context.Categories.FindAsync(id);
+            if (category == null)
+                return NotFound();
+
+            _context.Categories.Remove(category);
+            await _context.SaveChangesAsync();
+            return Ok();
+        }
+
+        [HttpPut("order")]
+        public async Task<IActionResult> UpdateOrder([FromBody] List<Category> categories)
+        {
+            foreach (var cat in categories)
+            {
+                var existing = await _context.Categories.FindAsync(cat.Id);
+                if (existing != null)
+                {
+                    //existing.SortOrder = cat.SortOrder;
+                }
+            }
+
+            await _context.SaveChangesAsync();
+            return Ok(categories);
         }
     }
 }
