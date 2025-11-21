@@ -95,5 +95,26 @@ namespace Infrastructure.Services
             });
         }
 
+
+        public async Task<IEnumerable<Order>> GetAllAsync()
+        {
+            return await _context.Orders
+                .Include(o => o.Items)
+                .OrderByDescending(o => o.Id)
+                .ToListAsync();
+        }
+
+        public async Task<bool> UpdateOrderStatusAsync(int orderId, string status)
+        {
+            var order = await _context.Orders.FindAsync(orderId);
+            if (order == null)
+                return false;
+
+            order.Status = status;
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
+
     }
 }

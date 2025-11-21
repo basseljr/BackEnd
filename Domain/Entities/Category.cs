@@ -11,7 +11,7 @@ namespace Domain.Entities
     {
         [Key]
         public int Id { get; set; }
-        public int TemplateId { get; set; }  
+        public int? TemplateId { get; set; }  
         public string Name { get; set; } = string.Empty;
         public string? ImageUrl { get; set; }
         public bool IsActive { get; set; } = true;
