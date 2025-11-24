@@ -1,4 +1,5 @@
 ﻿using Application.DTOs;
+using Application.Interfaces;
 using Domain.Entities;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -10,102 +11,49 @@ namespace SaaSApp.API.Controllers
     [Route("[controller]")]
     public class CategoriesController : ControllerBase
     {
-        private readonly AppDbContext _context;
-        public CategoriesController(AppDbContext context)
+        private readonly ICategoryService _categoryService;
+        public CategoriesController(ICategoryService categoryService)
         {
-            _context = context;
+            _categoryService = categoryService;
         }
 
-        [HttpGet("template/{templateId}")]
-        public async Task<IActionResult> GetByTemplate(int templateId)
+        [HttpGet("tenant/{tenantId}")]
+        public async Task<IActionResult> GetByTenant(int tenantId)
         {
-            var categories = await _context.Categories
-                .Where(c => c.TemplateId == templateId)
-                .Select(c => new CategoryDto
-                {
-                    Id = c.Id,
-                    Name = c.Name,
-                    ImageUrl = c.ImageUrl
-                })
-                .ToListAsync();
-
-            return Ok(categories);
-        }
-
-        [HttpGet]
-        public async Task<IActionResult> GetAll()
-        {
-            var categories = await _context.Categories.ToListAsync();
+            var categories = await _categoryService.GetByTenantAsync(tenantId);
             return Ok(categories);
         }
 
         [HttpGet("{id}")]
         public async Task<IActionResult> Get(int id)
         {
-            var category = await _context.Categories.FindAsync(id);
-            if (category == null)
-                return NotFound();
-
+            var category = await _categoryService.GetByIdAsync(id);
+            if (category == null) return NotFound();
             return Ok(category);
         }
 
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] Category category)
         {
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
-            try
-            {
-                _context.Categories.Add(category);
-                await _context.SaveChangesAsync();
-            }
-            catch (Exception ex) {
-                throw;
-            }
-            return Ok(category);
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+            var id = await _categoryService.AddAsync(category);
+            return Ok(new { id, message = "Category created successfully" });
         }
 
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(int id, [FromBody] Category updatedCategory)
         {
-            var category = await _context.Categories.FindAsync(id);
-            if (category == null)
-                return NotFound();
-
-            category.Name = updatedCategory.Name;
-            category.ImageUrl = updatedCategory.ImageUrl;
-            category.TemplateId = updatedCategory.TemplateId;
-
-            await _context.SaveChangesAsync();
-            return Ok(category);
+            var success = await _categoryService.UpdateAsync(id, updatedCategory);
+            if (!success) return NotFound();
+            return Ok(new { message = "Category updated successfully" });
         }
 
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
-            var category = await _context.Categories.FindAsync(id);
-            if (category == null)
-                return NotFound();
-
-            _context.Categories.Remove(category);
-            await _context.SaveChangesAsync();
-            return Ok();
-        }
-
-        [HttpPut("order")]
-        public async Task<IActionResult> UpdateOrder([FromBody] List<Category> categories)
-        {
-            foreach (var cat in categories)
-            {
-                var existing = await _context.Categories.FindAsync(cat.Id);
-                if (existing != null)
-                {
-                    //existing.SortOrder = cat.SortOrder;
-                }
-            }
-
-            await _context.SaveChangesAsync();
-            return Ok(categories);
+            var success = await _categoryService.DeleteAsync(id);
+            if (!success) return NotFound();
+            return Ok(new { message = "Category deleted successfully" });
         }
     }
 }

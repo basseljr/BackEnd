@@ -11,16 +11,13 @@ namespace Infrastructure.Services
     public class OrderService : IOrderService
     {
         private readonly AppDbContext _context;
-
-        public OrderService(AppDbContext context)
-        {
-            _context = context;
-        }
+        public OrderService(AppDbContext context) => _context = context;
 
         public async Task<int> CreateOrderAsync(CreateOrderRequest request)
         {
             var order = new Order
             {
+                TenantId = request.TenantId,
                 CustomerName = request.CustomerName,
                 Email = request.Email,
                 Mobile = request.Mobile,
@@ -29,8 +26,8 @@ namespace Infrastructure.Services
                 Status = "Pending",
                 Items = request.Items.Select(i => new OrderItem
                 {
-                    ItemId = i.ItemId,         // ✅ keep reference
-                    ItemName = i.ItemName,     // ✅ store name for snapshot
+                    ItemId = i.ItemId,
+                    ItemName = i.ItemName,
                     Quantity = i.Quantity,
                     Price = i.Price
                 }).ToList()
@@ -41,15 +38,13 @@ namespace Infrastructure.Services
             return order.Id;
         }
 
-        public async Task<OrderDto?> GetByIdAsync(int id)
+        public async Task<OrderDto?> GetByIdAsync(int id, int tenantId)
         {
             var order = await _context.Orders
                 .Include(o => o.Items)
-                    .ThenInclude(oi => oi.Item) // ✅ if linked to real Item table
-                .FirstOrDefaultAsync(o => o.Id == id);
+                .FirstOrDefaultAsync(o => o.Id == id && o.TenantId == tenantId);
 
-            if (order == null)
-                return null;
+            if (order == null) return null;
 
             return new OrderDto
             {
@@ -62,18 +57,18 @@ namespace Infrastructure.Services
                 Status = order.Status,
                 Items = order.Items.Select(i => new OrderItemDto
                 {
-                    ItemName = i.ItemName ?? i.Item?.Name ?? "(Unnamed item)", // ✅ fallback
+                    ItemName = i.ItemName,
                     Quantity = i.Quantity,
                     Price = i.Price
                 }).ToList()
             };
         }
 
-        public async Task<IEnumerable<OrderDto>> GetByCustomerMobileAsync(string mobile)
+        public async Task<IEnumerable<OrderDto>> GetByCustomerMobileAsync(string mobile, int tenantId)
         {
             var orders = await _context.Orders
                 .Include(o => o.Items)
-                .Where(o => o.Mobile == mobile)
+                .Where(o => o.Mobile == mobile && o.TenantId == tenantId)
                 .OrderByDescending(o => o.Id)
                 .ToListAsync();
 
@@ -95,26 +90,24 @@ namespace Infrastructure.Services
             });
         }
 
-
-        public async Task<IEnumerable<Order>> GetAllAsync()
+        public async Task<IEnumerable<Order>> GetAllAsync(int tenantId)
         {
             return await _context.Orders
                 .Include(o => o.Items)
+                .Where(o => o.TenantId == tenantId)
                 .OrderByDescending(o => o.Id)
                 .ToListAsync();
         }
 
-        public async Task<bool> UpdateOrderStatusAsync(int orderId, string status)
+        public async Task<bool> UpdateOrderStatusAsync(int orderId, string status, int tenantId)
         {
-            var order = await _context.Orders.FindAsync(orderId);
-            if (order == null)
-                return false;
+            var order = await _context.Orders
+                .FirstOrDefaultAsync(o => o.Id == orderId && o.TenantId == tenantId);
+            if (order == null) return false;
 
             order.Status = status;
             await _context.SaveChangesAsync();
             return true;
         }
-
-
     }
 }

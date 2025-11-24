@@ -37,21 +37,6 @@ namespace SaaSApp.API.Controllers
 
 
 
-        [HttpPost("customize")]
-        public async Task<IActionResult> SaveCustomization([FromBody] SaveCustomizationRequest request)
-        {
-            if (string.IsNullOrEmpty(request.Slug))
-                return BadRequest("Template slug is required.");
-
-            var template = await _templateService.GetBySlugAsync(request.Slug);
-            if (template == null)
-                return NotFound("Template not found.");
-
-            template.CustomizationData = request.CustomizationData;
-            await _templateService.UpdateAsync(template);
-
-            return Ok(new { message = "Customization saved successfully." });
-        }
 
         // GET /Templates/slug/{slug}
         [HttpGet("slug/{slug}")]

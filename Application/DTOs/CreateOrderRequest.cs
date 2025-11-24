@@ -8,6 +8,7 @@ namespace Application.DTOs
 {
     public class CreateOrderRequest
     {
+        public int TenantId { get; set; }
         public string CustomerName { get; set; } = string.Empty;
         public string? Email { get; set; }
         public string Mobile { get; set; } = string.Empty;

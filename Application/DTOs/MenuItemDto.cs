@@ -1,23 +1,21 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Domain.Entities
+namespace Application.DTOs
 {
-    public class Category
+    public class MenuItemDto
     {
-        [Key]
         public int Id { get; set; }
         public int TenantId { get; set; }
+        public int CategoryId { get; set; }
+        public string CategoryName { get; set; } = string.Empty;
         public string Name { get; set; } = string.Empty;
+        public string? Description { get; set; }
+        public decimal Price { get; set; }
         public string? Image { get; set; }
-        public bool IsActive { get; set; } = true;
-
-        public Tenant? Tenant { get; set; }
-        public ICollection<Item> Items { get; set; } = new List<Item>();
+        public bool IsAvailable { get; set; } = true;
     }
-
 }

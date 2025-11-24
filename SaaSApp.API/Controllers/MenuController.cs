@@ -1,66 +1,56 @@
-﻿using Domain.Entities;
+﻿using Application.DTOs;
+using Application.Interfaces;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using SaaSApp.Infrastructure.Data;
+using System.Threading.Tasks;
 
-[ApiController]
-[Route("[controller]")]
-public class MenuController : ControllerBase
+namespace SaaSApp.API.Controllers
 {
-    private readonly AppDbContext _context;
-    public MenuController(AppDbContext context)
+    [ApiController]
+    [Route("[controller]")]
+    public class MenuController : ControllerBase
     {
-        _context = context;
-    }
+        private readonly IMenuService _menuService;
+        public MenuController(IMenuService menuService)
+        {
+            _menuService = menuService;
+        }
 
-    [HttpGet("items")]
-    public async Task<IActionResult> GetAllItems()
-    {
-        var items = await _context.Items.ToListAsync();
-        return Ok(items);
-    }
+        [HttpGet("{tenantId}/items")]
+        public async Task<IActionResult> GetAll(int tenantId)
+        {
+            var items = await _menuService.GetAllAsync(tenantId);
+            return Ok(items);
+        }
 
-    [HttpGet("item/{id}")]
-    public async Task<IActionResult> GetItem(int id)
-    {
-        var item = await _context.Items.FindAsync(id);
-        if (item == null) return NotFound();
-        return Ok(item);
-    }
+        [HttpGet("{tenantId}/item/{id}")]
+        public async Task<IActionResult> GetById(int tenantId, int id)
+        {
+            var item = await _menuService.GetByIdAsync(id, tenantId);
+            if (item == null) return NotFound();
+            return Ok(item);
+        }
 
-    [HttpPost("item")]
-    public async Task<IActionResult> AddItem([FromBody] Item item)
-    {
-        _context.Items.Add(item);
-        await _context.SaveChangesAsync();
-        return Ok(item);
-    }
+        [HttpPost("item")]
+        public async Task<IActionResult> AddItem([FromBody] MenuItemDto dto)
+        {
+            var id = await _menuService.AddAsync(dto);
+            return Ok(new { id, message = "Item added successfully" });
+        }
 
-    [HttpPut("item/{id}")]
-    public async Task<IActionResult> UpdateItem(int id, [FromBody] Item updatedItem)
-    {
-        var item = await _context.Items.FindAsync(id);
-        if (item == null) return NotFound();
+        [HttpPut("item/{id}")]
+        public async Task<IActionResult> UpdateItem(int id, [FromBody] MenuItemDto dto)
+        {
+            var success = await _menuService.UpdateAsync(id, dto);
+            if (!success) return NotFound();
+            return Ok(new { message = "Item updated successfully" });
+        }
 
-        item.Name = updatedItem.Name;
-        item.Price = updatedItem.Price;
-        item.Description = updatedItem.Description;
-        item.CategoryId = updatedItem.CategoryId;
-        item.ImageUrl = updatedItem.ImageUrl;
-        item.IsAvailable = updatedItem.IsAvailable;
-
-        await _context.SaveChangesAsync();
-        return Ok(item);
-    }
-
-    [HttpDelete("item/{id}")]
-    public async Task<IActionResult> DeleteItem(int id)
-    {
-        var item = await _context.Items.FindAsync(id);
-        if (item == null) return NotFound();
-
-        _context.Items.Remove(item);
-        await _context.SaveChangesAsync();
-        return Ok();
+        [HttpDelete("item/{id}")]
+        public async Task<IActionResult> DeleteItem(int id)
+        {
+            var success = await _menuService.DeleteAsync(id);
+            if (!success) return NotFound();
+            return Ok(new { message = "Item deleted successfully" });
+        }
     }
 }

@@ -11,12 +11,9 @@ namespace Application.Interfaces
     public interface IOrderService
     {
         Task<int> CreateOrderAsync(CreateOrderRequest request);
-        Task<OrderDto?> GetByIdAsync(int id);
-        Task<IEnumerable<OrderDto>> GetByCustomerMobileAsync(string mobile);
-        Task<IEnumerable<Order>> GetAllAsync();
-        Task<bool> UpdateOrderStatusAsync(int orderId, string status);
-
-
-
+        Task<OrderDto?> GetByIdAsync(int id, int tenantId);
+        Task<IEnumerable<OrderDto>> GetByCustomerMobileAsync(string mobile, int tenantId);
+        Task<IEnumerable<Order>> GetAllAsync(int tenantId);
+        Task<bool> UpdateOrderStatusAsync(int orderId, string status, int tenantId);
     }
 }
