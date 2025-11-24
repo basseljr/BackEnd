@@ -1,6 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using SaaSApp.Infrastructure.Data;
+﻿using Application.Interfaces;
+using Microsoft.AspNetCore.Mvc;
 
 namespace SaaSApp.API.Controllers
 {
@@ -8,67 +7,60 @@ namespace SaaSApp.API.Controllers
     [Route("[controller]")]
     public class AnalyticsController : ControllerBase
     {
-        private readonly AppDbContext _context;
-        public AnalyticsController(AppDbContext context)
+        private readonly IAnalyticsService _analyticsService;
+
+        public AnalyticsController(IAnalyticsService analyticsService)
         {
-            _context = context;
+            _analyticsService = analyticsService;
         }
 
-        // GET /Analytics/sales?period=daily
         [HttpGet("sales")]
-        public IActionResult GetSalesSummary([FromQuery] string period = "daily")
+        public async Task<IActionResult> GetSales(
+            [FromQuery] int tenantId,
+            [FromQuery] string period = "daily",
+            [FromQuery] DateTime? startDate = null,
+            [FromQuery] DateTime? endDate = null)
         {
-            // Dummy example – replace with real query logic
-            var result = new
-            {
-                labels = new[] { "Mon", "Tue", "Wed", "Thu", "Fri" },
-                values = new[] { 120, 200, 180, 250, 300 }
-            };
+            var result = await _analyticsService.GetSalesSummaryAsync(
+                tenantId, period, startDate, endDate
+            );
             return Ok(result);
         }
 
-        // GET /Analytics/top-items?limit=5
         [HttpGet("top-items")]
-        public IActionResult GetTopItems([FromQuery] int limit = 5)
+        public async Task<IActionResult> GetTopItems(
+            [FromQuery] int tenantId,
+            [FromQuery] int limit = 5,
+            [FromQuery] DateTime? startDate = null,
+            [FromQuery] DateTime? endDate = null)
         {
-            var items = _context.Items
-                .OrderByDescending(i => i.Price)
-                .Take(limit)
-                .Select(i => new
-                {
-                    itemName = i.Name,
-                    quantitySold = 50,
-                    revenue = i.Price * 50
-                })
-                .ToList();
-
-            return Ok(items);
+            var result = await _analyticsService.GetTopItemsAsync(
+                tenantId, limit, startDate, endDate
+            );
+            return Ok(result);
         }
 
-        // GET /Analytics/status-breakdown
         [HttpGet("status-breakdown")]
-        public IActionResult GetOrderStatusBreakdown()
+        public async Task<IActionResult> GetStatusBreakdown(
+            [FromQuery] int tenantId,
+            [FromQuery] DateTime? startDate = null,
+            [FromQuery] DateTime? endDate = null)
         {
-            var breakdown = _context.Orders
-                .GroupBy(o => o.Status)
-                .Select(g => new
-                {
-                    status = g.Key,
-                    count = g.Count()
-                })
-                .ToList();
-
-            return Ok(breakdown);
+            var result = await _analyticsService.GetOrderStatusBreakdownAsync(
+                tenantId, startDate, endDate
+            );
+            return Ok(result);
         }
 
-        // GET /Analytics/customers
         [HttpGet("customers")]
-        public IActionResult GetCustomerAnalytics()
+        public async Task<IActionResult> GetCustomerAnalytics(
+            [FromQuery] int tenantId,
+            [FromQuery] int days = 30)
         {
-            var newCustomers = _context.Users.Count(c => c.CreatedAt > DateTime.UtcNow.AddDays(-30));
-            var returningCustomers = _context.Users.Count() - newCustomers;
-
-            return Ok(new { newCustomers, returningCustomers, totalCustomers = newCustomers + returningCustomers });
+            var result = await _analyticsService.GetCustomerAnalyticsAsync(
+                tenantId, days
+            );
+            return Ok(result);
         }
     }
 }

@@ -18,15 +18,49 @@ namespace Infrastructure.Services
             _context = context;
         }
 
-        public async Task<IEnumerable<Category>> GetByTemplateAsync(int templateId)
+        public async Task<IEnumerable<Category>> GetByTenantAsync(int tenantId)
         {
-            return await _context.Categories.Include(c => c.Items).Where(c => c.TemplateId == templateId && c.IsActive)
+            return await _context.Categories
+                .Include(c => c.Items)
+                .Where(c => c.TenantId == tenantId && c.IsActive)
                 .ToListAsync();
         }
 
         public async Task<Category?> GetByIdAsync(int id)
         {
-            return await _context.Categories .Include(c => c.Items).FirstOrDefaultAsync(c => c.Id == id);
+            return await _context.Categories
+                .Include(c => c.Items)
+                .FirstOrDefaultAsync(c => c.Id == id);
+        }
+
+        public async Task<int> AddAsync(Category category)
+        {
+            _context.Categories.Add(category);
+            await _context.SaveChangesAsync();
+            return category.Id;
+        }
+
+        public async Task<bool> UpdateAsync(int id, Category updatedCategory)
+        {
+            var existing = await _context.Categories.FindAsync(id);
+            if (existing == null) return false;
+
+            existing.Name = updatedCategory.Name;
+            existing.Image = updatedCategory.Image;
+            existing.IsActive = updatedCategory.IsActive;
+
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
+        public async Task<bool> DeleteAsync(int id)
+        {
+            var existing = await _context.Categories.FindAsync(id);
+            if (existing == null) return false;
+
+            _context.Categories.Remove(existing);
+            await _context.SaveChangesAsync();
+            return true;
         }
     }
 }
