@@ -3,17 +3,25 @@ using Microsoft.AspNetCore.Mvc;
 
 [ApiController]
 [Route("[controller]")]
-public class TenantsController : ControllerBase
+public class TenantController : ControllerBase
 {
     private readonly ITenantService _tenantService;
-    public TenantsController(ITenantService tenantService) => _tenantService = tenantService;
 
-    [HttpGet("by-domain")]
-    public async Task<IActionResult> GetByDomain([FromQuery] string domain)
+    public TenantController(ITenantService tenantService)
     {
-        var tenant = await _tenantService.GetByDomainAsync(domain);
+        _tenantService = tenantService;
+    }
+
+    // The endpoint your frontend expects:
+    // GET /Tenant/resolve?host=<hostname>
+    [HttpGet("resolve")]
+    public async Task<IActionResult> Resolve([FromQuery] string host)
+    {
+        var tenant = await _tenantService.GetByDomainAsync(host);
+
         if (tenant == null)
             return NotFound(new { message = "Tenant not found" });
-        return Ok(tenant);
+
+        return Ok(new { tenantId = tenant.Id });
     }
 }

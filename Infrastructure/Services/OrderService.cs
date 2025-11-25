@@ -1,4 +1,5 @@
-﻿using Application.DTOs;
+﻿using Application.Common;
+using Application.DTOs;
 using Application.Interfaces;
 using Domain.Entities;
 using Microsoft.EntityFrameworkCore;
@@ -11,13 +12,18 @@ namespace Infrastructure.Services
     public class OrderService : IOrderService
     {
         private readonly AppDbContext _context;
-        public OrderService(AppDbContext context) => _context = context;
+        private readonly TenantContext _tenantContext;
+        public OrderService(AppDbContext context, TenantContext tenantContext)
+        {
+            _context = context;
+            _tenantContext = tenantContext;
+        }
 
         public async Task<int> CreateOrderAsync(CreateOrderRequest request)
         {
             var order = new Order
             {
-                TenantId = request.TenantId,
+                TenantId = _tenantContext.TenantId,
                 CustomerName = request.CustomerName,
                 Email = request.Email,
                 Mobile = request.Mobile,
@@ -38,11 +44,11 @@ namespace Infrastructure.Services
             return order.Id;
         }
 
-        public async Task<OrderDto?> GetByIdAsync(int id, int tenantId)
+        public async Task<OrderDto?> GetByIdAsync(int id)
         {
             var order = await _context.Orders
                 .Include(o => o.Items)
-                .FirstOrDefaultAsync(o => o.Id == id && o.TenantId == tenantId);
+                .FirstOrDefaultAsync(o => o.Id == id && o.TenantId == _tenantContext.TenantId);
 
             if (order == null) return null;
 
@@ -64,11 +70,11 @@ namespace Infrastructure.Services
             };
         }
 
-        public async Task<IEnumerable<OrderDto>> GetByCustomerMobileAsync(string mobile, int tenantId)
+        public async Task<IEnumerable<OrderDto>> GetByCustomerMobileAsync(string mobile)
         {
             var orders = await _context.Orders
                 .Include(o => o.Items)
-                .Where(o => o.Mobile == mobile && o.TenantId == tenantId)
+                .Where(o => o.Mobile == mobile && o.TenantId == _tenantContext.TenantId)
                 .OrderByDescending(o => o.Id)
                 .ToListAsync();
 
@@ -90,19 +96,19 @@ namespace Infrastructure.Services
             });
         }
 
-        public async Task<IEnumerable<Order>> GetAllAsync(int tenantId)
+        public async Task<IEnumerable<Order>> GetAllAsync()
         {
             return await _context.Orders
                 .Include(o => o.Items)
-                .Where(o => o.TenantId == tenantId)
+                .Where(o => o.TenantId == _tenantContext.TenantId)
                 .OrderByDescending(o => o.Id)
                 .ToListAsync();
         }
 
-        public async Task<bool> UpdateOrderStatusAsync(int orderId, string status, int tenantId)
+        public async Task<bool> UpdateOrderStatusAsync(int orderId, string status)
         {
             var order = await _context.Orders
-                .FirstOrDefaultAsync(o => o.Id == orderId && o.TenantId == tenantId);
+                .FirstOrDefaultAsync(o => o.Id == orderId && o.TenantId == _tenantContext.TenantId);
             if (order == null) return false;
 
             order.Status = status;

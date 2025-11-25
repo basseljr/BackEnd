@@ -1,5 +1,7 @@
-﻿using Application.DTOs;
+﻿using Application.Common;
+using Application.DTOs;
 using Application.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 [ApiController]
@@ -7,17 +9,23 @@ using Microsoft.AspNetCore.Mvc;
 public class TenantCustomizationsController : ControllerBase
 {
     private readonly ITenantCustomizationService _service;
-    public TenantCustomizationsController(ITenantCustomizationService service) => _service = service;
-
-    [HttpGet("{tenantId}")]
-    public async Task<IActionResult> GetCustomization(int tenantId)
+    private readonly TenantContext _tenantContext;
+    public TenantCustomizationsController(ITenantCustomizationService service, TenantContext tenantContext)
     {
-        var customization = await _service.GetByTenantIdAsync(tenantId);
+        _service = service;
+        _tenantContext = tenantContext;
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> GetCustomization()
+    {
+        var customization = await _service.GetCurrentAsync();
         if (customization == null) return NotFound();
         return Ok(customization);
     }
 
     [HttpPost]
+    [Authorize(Roles = "Admin,Owner")]
     public async Task<IActionResult> SaveCustomization([FromBody] TenantCustomizationDto dto)
     {
         await _service.SaveCustomizationAsync(dto);

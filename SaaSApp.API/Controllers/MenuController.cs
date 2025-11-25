@@ -1,5 +1,7 @@
-﻿using Application.DTOs;
+﻿using Application.Common;
+using Application.DTOs;
 using Application.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
 
@@ -10,27 +12,30 @@ namespace SaaSApp.API.Controllers
     public class MenuController : ControllerBase
     {
         private readonly IMenuService _menuService;
-        public MenuController(IMenuService menuService)
+        private readonly TenantContext _tenantContext;
+        public MenuController(IMenuService menuService, TenantContext tenantContext)
         {
             _menuService = menuService;
+            _tenantContext = tenantContext;
         }
 
-        [HttpGet("{tenantId}/items")]
-        public async Task<IActionResult> GetAll(int tenantId)
+        [HttpGet("items")]
+        public async Task<IActionResult> GetAll()
         {
-            var items = await _menuService.GetAllAsync(tenantId);
+            var items = await _menuService.GetAllAsync();
             return Ok(items);
         }
 
-        [HttpGet("{tenantId}/item/{id}")]
-        public async Task<IActionResult> GetById(int tenantId, int id)
+        [HttpGet("item/{id}")]
+        public async Task<IActionResult> GetById(int id)
         {
-            var item = await _menuService.GetByIdAsync(id, tenantId);
+            var item = await _menuService.GetByIdAsync(id);
             if (item == null) return NotFound();
             return Ok(item);
         }
 
         [HttpPost("item")]
+        [Authorize(Roles = "Admin,Owner")]
         public async Task<IActionResult> AddItem([FromBody] MenuItemDto dto)
         {
             var id = await _menuService.AddAsync(dto);
@@ -38,6 +43,7 @@ namespace SaaSApp.API.Controllers
         }
 
         [HttpPut("item/{id}")]
+        [Authorize(Roles = "Admin,Owner")]
         public async Task<IActionResult> UpdateItem(int id, [FromBody] MenuItemDto dto)
         {
             var success = await _menuService.UpdateAsync(id, dto);
@@ -46,6 +52,7 @@ namespace SaaSApp.API.Controllers
         }
 
         [HttpDelete("item/{id}")]
+        [Authorize(Roles = "Admin,Owner")]
         public async Task<IActionResult> DeleteItem(int id)
         {
             var success = await _menuService.DeleteAsync(id);

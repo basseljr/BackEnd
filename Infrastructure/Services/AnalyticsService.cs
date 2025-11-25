@@ -1,4 +1,5 @@
-﻿using Application.DTOs;
+﻿using Application.Common;
+using Application.DTOs;
 using Application.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using SaaSApp.Infrastructure.Data;
@@ -8,48 +9,86 @@ namespace Infrastructure.Services
     public class AnalyticsService : IAnalyticsService
     {
         private readonly AppDbContext _context;
-        public AnalyticsService(AppDbContext context) => _context = context;
+        private readonly TenantContext _tenantContext;
 
-        public async Task<SalesSummaryDto> GetSalesSummaryAsync(
-            int tenantId, string period, DateTime? startDate, DateTime? endDate)
+        public AnalyticsService(AppDbContext context, TenantContext tenantContext)
         {
-            var query = _context.Orders.Where(o => o.TenantId == tenantId);
+            _context = context;
+            _tenantContext = tenantContext;
+        }
 
-            if (startDate.HasValue && endDate.HasValue)
-                query = query.Where(o => o.CreatedAt >= startDate &&
-                                         o.CreatedAt <= endDate);
+        // ------------------------------------------------------------
+        // SALES SUMMARY ( DAILY / WEEKLY / MONTHLY / CUSTOM )
+        // ------------------------------------------------------------
+
+        public async Task<SalesSummaryDto> GetSalesSummaryAsync1(
+            string period, DateTime? startDate, DateTime? endDate)
+        {
+            var query = _context.Orders
+                .Where(o => o.TenantId == _tenantContext.TenantId);
 
             var now = DateTime.UtcNow.Date;
 
-            if (!startDate.HasValue || !endDate.HasValue)
+            // Custom range
+            if (startDate.HasValue && endDate.HasValue)
             {
-                if (period == "weekly")
+                query = query.Where(o => o.CreatedAt >= startDate &&
+                                         o.CreatedAt <= endDate);
+            }
+            else
+            {
+                // Period filtering
+                switch (period)
                 {
-                    var weekStart = now.AddDays(-(int)now.DayOfWeek);
-                    query = query.Where(o => o.CreatedAt >= weekStart);
+                    case "weekly":
+                        var weekStart = now.AddDays(-(int)now.DayOfWeek);
+                        query = query.Where(o => o.CreatedAt >= weekStart);
+                        break;
+
+                    case "monthly":
+                        query = query.Where(o =>
+                            o.CreatedAt.Month == now.Month &&
+                            o.CreatedAt.Year == now.Year);
+                        break;
+
+                    default: // daily
+                        query = query.Where(o =>
+                            o.CreatedAt.Year == now.Year &&
+                            o.CreatedAt.Month == now.Month &&
+                            o.CreatedAt.Day == now.Day);
+                        break;
                 }
-                else if (period == "monthly")
-                {
-                    query = query.Where(o =>
-                        o.CreatedAt.Month == now.Month &&
-                        o.CreatedAt.Year == now.Year
-                    );
-                }
-                else
-                {
-                    query = query.Where(o => o.CreatedAt.Date == now);
-                }
+
             }
 
-            var grouped = await query
-                .GroupBy(o => o.CreatedAt.Date)
+            // ---- FIXED GROUPING ----
+            var raw = await query
+                .GroupBy(o => new
+                {
+                    o.CreatedAt.Year,
+                    o.CreatedAt.Month,
+                    o.CreatedAt.Day
+                })
                 .Select(g => new
                 {
-                    Label = g.Key.ToString("yyyy-MM-dd"),
+                    g.Key.Year,
+                    g.Key.Month,
+                    g.Key.Day,
                     Total = g.Sum(x => x.Total)
                 })
-                .OrderBy(x => x.Label)
+                .OrderBy(g => g.Year)
+                .ThenBy(g => g.Month)
+                .ThenBy(g => g.Day)
                 .ToListAsync();
+
+            // Format labels AFTER SQL → SAFE
+            var grouped = raw
+                .Select(g => new
+                {
+                    Label = $"{g.Year}-{g.Month:D2}-{g.Day:D2}",
+                    g.Total
+                })
+                .ToList();
 
             return new SalesSummaryDto
             {
@@ -59,17 +98,76 @@ namespace Infrastructure.Services
             };
         }
 
+        public async Task<SalesSummaryDto> GetSalesSummaryAsync(
+            string period, DateTime? startDate, DateTime? endDate)
+        {
+            var query = _context.Orders
+                .Where(o => o.TenantId == _tenantContext.TenantId);
+
+            var now = DateTime.UtcNow.Date;
+
+            // Period filters
+            if (startDate.HasValue && endDate.HasValue)
+            {
+                query = query.Where(o => o.CreatedAt >= startDate &&
+                                         o.CreatedAt <= endDate);
+            }
+            else
+            {
+                switch (period)
+                {
+                    case "weekly":
+                        var weekStart = now.AddDays(-(int)now.DayOfWeek);
+                        query = query.Where(o => o.CreatedAt >= weekStart);
+                        break;
+
+                    case "monthly":
+                        query = query.Where(o =>
+                            o.CreatedAt.Month == now.Month &&
+                            o.CreatedAt.Year == now.Year);
+                        break;
+
+                    default: // daily
+                        query = query.Where(o => o.CreatedAt.Date == now);
+                        break;
+                }
+            }
+
+            // Return **every order** as a point
+            var results = await query
+                .OrderBy(o => o.CreatedAt)
+                .Select(o => new
+                {
+                    Label = o.CreatedAt.ToString("HH:mm"),  // show TIME, so points are separate
+                    Value = o.Total
+                })
+                .ToListAsync();
+
+            return new SalesSummaryDto
+            {
+                Labels = results.Select(r => r.Label).ToList(),
+                Values = results.Select(r => r.Value).ToList(),
+                Period = period
+            };
+        }
+
+
+        // ------------------------------------------------------------
+        // TOP ITEMS
+        // ------------------------------------------------------------
+
         public async Task<IEnumerable<TopItemDto>> GetTopItemsAsync(
-            int tenantId, int limit, DateTime? startDate, DateTime? endDate)
+            int limit, DateTime? startDate, DateTime? endDate)
         {
             var query = _context.OrderItems
                 .Include(x => x.Order)
-                .Include(x => x.Item)
-                .Where(x => x.Order.TenantId == tenantId);
+                .Where(x => x.Order.TenantId == _tenantContext.TenantId);
 
             if (startDate.HasValue && endDate.HasValue)
+            {
                 query = query.Where(x => x.Order.CreatedAt >= startDate &&
-                                         x.Order.CreatedAt <= endDate);
+                                          x.Order.CreatedAt <= endDate);
+            }
 
             return await query
                 .GroupBy(x => new { x.ItemId, x.ItemName })
@@ -85,14 +183,21 @@ namespace Infrastructure.Services
                 .ToListAsync();
         }
 
+        // ------------------------------------------------------------
+        // ORDER STATUS BREAKDOWN
+        // ------------------------------------------------------------
+
         public async Task<IEnumerable<OrderStatusBreakdownDto>>
-            GetOrderStatusBreakdownAsync(int tenantId, DateTime? startDate, DateTime? endDate)
+            GetOrderStatusBreakdownAsync(DateTime? startDate, DateTime? endDate)
         {
-            var query = _context.Orders.Where(o => o.TenantId == tenantId);
+            var query = _context.Orders
+                .Where(o => o.TenantId == _tenantContext.TenantId);
 
             if (startDate.HasValue && endDate.HasValue)
+            {
                 query = query.Where(o => o.CreatedAt >= startDate &&
                                          o.CreatedAt <= endDate);
+            }
 
             var total = await query.CountAsync();
             if (total == 0) total = 1;
@@ -108,17 +213,20 @@ namespace Infrastructure.Services
                 .ToListAsync();
         }
 
-        public async Task<CustomerAnalyticsDto> GetCustomerAnalyticsAsync(
-            int tenantId, int days)
+        // ------------------------------------------------------------
+        // CUSTOMER ANALYTICS
+        // ------------------------------------------------------------
+
+        public async Task<CustomerAnalyticsDto> GetCustomerAnalyticsAsync(int days)
         {
             var cutoff = DateTime.UtcNow.AddDays(-days);
 
             var newCustomers = await _context.Users
-                .CountAsync(u => u.TenantId == tenantId &&
+                .CountAsync(u => u.TenantId == _tenantContext.TenantId &&
                                  u.CreatedAt >= cutoff);
 
             var total = await _context.Users
-                .CountAsync(u => u.TenantId == tenantId);
+                .CountAsync(u => u.TenantId == _tenantContext.TenantId);
 
             return new CustomerAnalyticsDto
             {

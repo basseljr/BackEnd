@@ -9,11 +9,10 @@ namespace Application.Interfaces
 {
     public interface IMenuService
     {
-        Task<IEnumerable<MenuItemDto>> GetAllAsync(int tenantId);
-        Task<MenuItemDto?> GetByIdAsync(int id, int tenantId);
+        Task<IEnumerable<MenuItemDto>> GetAllAsync();
+        Task<MenuItemDto?> GetByIdAsync(int id);
         Task<int> AddAsync(MenuItemDto dto);
         Task<bool> UpdateAsync(int id, MenuItemDto dto);
         Task<bool> DeleteAsync(int id);
-
     }
 }

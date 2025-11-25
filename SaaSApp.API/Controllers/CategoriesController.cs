@@ -1,6 +1,8 @@
-﻿using Application.DTOs;
+﻿using Application.Common;
+using Application.DTOs;
 using Application.Interfaces;
 using Domain.Entities;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SaaSApp.Infrastructure.Data;
@@ -12,15 +14,17 @@ namespace SaaSApp.API.Controllers
     public class CategoriesController : ControllerBase
     {
         private readonly ICategoryService _categoryService;
-        public CategoriesController(ICategoryService categoryService)
+        private readonly TenantContext _tenantContext;
+        public CategoriesController(ICategoryService categoryService, TenantContext tenantContext)
         {
             _categoryService = categoryService;
+            _tenantContext = tenantContext;
         }
 
-        [HttpGet("tenant/{tenantId}")]
-        public async Task<IActionResult> GetByTenant(int tenantId)
+        [HttpGet]
+        public async Task<IActionResult> GetAll()
         {
-            var categories = await _categoryService.GetByTenantAsync(tenantId);
+            var categories = await _categoryService.GetAllAsync();
             return Ok(categories);
         }
 
@@ -33,6 +37,7 @@ namespace SaaSApp.API.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = "Admin,Owner")]
         public async Task<IActionResult> Create([FromBody] Category category)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
@@ -41,6 +46,7 @@ namespace SaaSApp.API.Controllers
         }
 
         [HttpPut("{id}")]
+        [Authorize(Roles = "Admin,Owner")]
         public async Task<IActionResult> Update(int id, [FromBody] Category updatedCategory)
         {
             var success = await _categoryService.UpdateAsync(id, updatedCategory);
@@ -49,6 +55,7 @@ namespace SaaSApp.API.Controllers
         }
 
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin,Owner")]
         public async Task<IActionResult> Delete(int id)
         {
             var success = await _categoryService.DeleteAsync(id);

@@ -1,4 +1,5 @@
-﻿using Application.DTOs;
+﻿using Application.Common;
+using Application.DTOs;
 using Application.Interfaces;
 using Domain.Entities;
 using Microsoft.EntityFrameworkCore;
@@ -11,15 +12,21 @@ using System.Threading.Tasks;
 
 namespace Infrastructure.Services
 {
-
     public class TenantCustomizationService : ITenantCustomizationService
     {
         private readonly AppDbContext _context;
-        public TenantCustomizationService(AppDbContext context) => _context = context;
-
-        public async Task<TenantCustomizationDto?> GetByTenantIdAsync(int tenantId)
+        private readonly TenantContext _tenantContext;
+        public TenantCustomizationService(AppDbContext context, TenantContext tenantContext)
         {
-            var customization = await _context.TenantCustomizations.Include(c => c.Template).FirstOrDefaultAsync(c => c.TenantId == tenantId);
+            _context = context;
+            _tenantContext = tenantContext;
+        }
+
+        public async Task<TenantCustomizationDto?> GetCurrentAsync()
+        {
+            var customization = await _context.TenantCustomizations
+                .Include(c => c.Template)
+                .FirstOrDefaultAsync(c => c.TenantId == _tenantContext.TenantId);
 
             if (customization == null) return null;
 
@@ -33,13 +40,14 @@ namespace Infrastructure.Services
 
         public async Task SaveCustomizationAsync(TenantCustomizationDto dto)
         {
-            var existing = await _context.TenantCustomizations.FirstOrDefaultAsync(c => c.TenantId == dto.TenantId);
+            var existing = await _context.TenantCustomizations
+                .FirstOrDefaultAsync(c => c.TenantId == _tenantContext.TenantId);
 
             if (existing == null)
             {
                 var newCustomization = new TenantCustomization
                 {
-                    TenantId = dto.TenantId,
+                    TenantId = _tenantContext.TenantId,
                     TemplateId = dto.TemplateId,
                     CustomizationData = dto.CustomizationData
                 };
@@ -48,6 +56,7 @@ namespace Infrastructure.Services
             else
             {
                 existing.CustomizationData = dto.CustomizationData;
+                existing.TemplateId = dto.TemplateId;
                 existing.LastModified = DateTime.UtcNow;
                 _context.TenantCustomizations.Update(existing);
             }
