@@ -1,64 +1,65 @@
-﻿using Application.Interfaces;
+﻿using Application.Common;
+using Application.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace SaaSApp.API.Controllers
 {
     [ApiController]
     [Route("[controller]")]
+    [Authorize(Roles = "Admin,Owner")]
     public class AnalyticsController : ControllerBase
     {
         private readonly IAnalyticsService _analyticsService;
+        private readonly TenantContext _tenantContext;
 
-        public AnalyticsController(IAnalyticsService analyticsService)
+        public AnalyticsController(IAnalyticsService analyticsService, TenantContext tenantContext)
         {
             _analyticsService = analyticsService;
+            _tenantContext = tenantContext;
         }
 
         [HttpGet("sales")]
         public async Task<IActionResult> GetSales(
-            [FromQuery] int tenantId,
             [FromQuery] string period = "daily",
             [FromQuery] DateTime? startDate = null,
             [FromQuery] DateTime? endDate = null)
         {
             var result = await _analyticsService.GetSalesSummaryAsync(
-                tenantId, period, startDate, endDate
+                period, startDate, endDate
             );
             return Ok(result);
         }
 
         [HttpGet("top-items")]
         public async Task<IActionResult> GetTopItems(
-            [FromQuery] int tenantId,
             [FromQuery] int limit = 5,
             [FromQuery] DateTime? startDate = null,
             [FromQuery] DateTime? endDate = null)
         {
             var result = await _analyticsService.GetTopItemsAsync(
-                tenantId, limit, startDate, endDate
+                limit, startDate, endDate
             );
             return Ok(result);
         }
 
         [HttpGet("status-breakdown")]
         public async Task<IActionResult> GetStatusBreakdown(
-            [FromQuery] int tenantId,
             [FromQuery] DateTime? startDate = null,
             [FromQuery] DateTime? endDate = null)
         {
             var result = await _analyticsService.GetOrderStatusBreakdownAsync(
-                tenantId, startDate, endDate
+                startDate, endDate
             );
             return Ok(result);
         }
 
         [HttpGet("customers")]
         public async Task<IActionResult> GetCustomerAnalytics(
-            [FromQuery] int tenantId,
             [FromQuery] int days = 30)
         {
             var result = await _analyticsService.GetCustomerAnalyticsAsync(
-                tenantId, days
+                days
             );
             return Ok(result);
         }

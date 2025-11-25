@@ -7,11 +7,9 @@ using System.Threading.Tasks;
 
 namespace Application.Interfaces
 {
- 
-        public interface ITenantCustomizationService
-        {
-            Task<TenantCustomizationDto?> GetByTenantIdAsync(int tenantId);
-            Task SaveCustomizationAsync(TenantCustomizationDto dto);
-        }
-    
+    public interface ITenantCustomizationService
+    {
+        Task<TenantCustomizationDto?> GetCurrentAsync();
+        Task SaveCustomizationAsync(TenantCustomizationDto dto);
+    }
 }

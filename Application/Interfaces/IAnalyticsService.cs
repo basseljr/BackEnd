@@ -9,32 +9,26 @@ namespace Application.Interfaces
 {
     public interface IAnalyticsService
     {
-      
-            Task<SalesSummaryDto> GetSalesSummaryAsync(
-                int tenantId,
-                string period,
+        Task<SalesSummaryDto> GetSalesSummaryAsync(
+            string period,
+            DateTime? startDate,
+            DateTime? endDate
+        );
+
+        Task<IEnumerable<TopItemDto>> GetTopItemsAsync(
+            int limit,
+            DateTime? startDate,
+            DateTime? endDate
+        );
+
+        Task<IEnumerable<OrderStatusBreakdownDto>>
+            GetOrderStatusBreakdownAsync(
                 DateTime? startDate,
                 DateTime? endDate
             );
 
-            Task<IEnumerable<TopItemDto>> GetTopItemsAsync(
-                int tenantId,
-                int limit,
-                DateTime? startDate,
-                DateTime? endDate
-            );
-
-            Task<IEnumerable<OrderStatusBreakdownDto>>
-                GetOrderStatusBreakdownAsync(
-                    int tenantId,
-                    DateTime? startDate,
-                    DateTime? endDate
-                );
-
-            Task<CustomerAnalyticsDto> GetCustomerAnalyticsAsync(
-                int tenantId,
-                int days
-            );
+        Task<CustomerAnalyticsDto> GetCustomerAnalyticsAsync(
+            int days
+        );
     }
-  
 }

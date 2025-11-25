@@ -1,4 +1,5 @@
-﻿using Application.DTOs;
+﻿using Application.Common;
+using Application.DTOs;
 using Application.Interfaces;
 using Domain.Entities;
 using Microsoft.EntityFrameworkCore;
@@ -12,16 +13,18 @@ namespace Infrastructure.Services
     public class MenuService : IMenuService
     {
         private readonly AppDbContext _context;
-        public MenuService(AppDbContext context)
+        private readonly TenantContext _tenantContext;
+        public MenuService(AppDbContext context, TenantContext tenantContext)
         {
             _context = context;
+            _tenantContext = tenantContext;
         }
 
-        public async Task<IEnumerable<MenuItemDto>> GetAllAsync(int tenantId)
+        public async Task<IEnumerable<MenuItemDto>> GetAllAsync()
         {
             var items = await _context.Items
                 .Include(i => i.Category)
-                .Where(i => i.TenantId == tenantId)
+                .Where(i => i.TenantId == _tenantContext.TenantId)
                 .ToListAsync();
 
             return items.Select(i => new MenuItemDto
@@ -38,11 +41,11 @@ namespace Infrastructure.Services
             });
         }
 
-        public async Task<MenuItemDto?> GetByIdAsync(int id, int tenantId)
+        public async Task<MenuItemDto?> GetByIdAsync(int id)
         {
             var i = await _context.Items
                 .Include(x => x.Category)
-                .FirstOrDefaultAsync(x => x.Id == id && x.TenantId == tenantId);
+                .FirstOrDefaultAsync(x => x.Id == id && x.TenantId == _tenantContext.TenantId);
 
             if (i == null) return null;
 
@@ -64,7 +67,7 @@ namespace Infrastructure.Services
         {
             var item = new Item
             {
-                TenantId = dto.TenantId,
+                TenantId = _tenantContext.TenantId,
                 CategoryId = dto.CategoryId,
                 Name = dto.Name,
                 Description = dto.Description,
@@ -81,7 +84,7 @@ namespace Infrastructure.Services
         public async Task<bool> UpdateAsync(int id, MenuItemDto dto)
         {
             var item = await _context.Items
-                .FirstOrDefaultAsync(i => i.Id == id && i.TenantId == dto.TenantId);
+                .FirstOrDefaultAsync(i => i.Id == id && i.TenantId == _tenantContext.TenantId);
             if (item == null) return false;
 
             item.Name = dto.Name;
@@ -97,7 +100,8 @@ namespace Infrastructure.Services
 
         public async Task<bool> DeleteAsync(int id)
         {
-            var item = await _context.Items.FindAsync(id);
+            var item = await _context.Items
+                .FirstOrDefaultAsync(i => i.Id == id && i.TenantId == _tenantContext.TenantId);
             if (item == null) return false;
 
             _context.Items.Remove(item);

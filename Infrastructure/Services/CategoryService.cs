@@ -1,4 +1,5 @@
-﻿using Application.Interfaces;
+﻿using Application.Common;
+using Application.Interfaces;
 using Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using SaaSApp.Infrastructure.Data;
@@ -13,16 +14,18 @@ namespace Infrastructure.Services
     public class CategoryService : ICategoryService
     {
         private readonly AppDbContext _context;
-        public CategoryService(AppDbContext context)
+        private readonly TenantContext _tenantContext;
+        public CategoryService(AppDbContext context, TenantContext tenantContext)
         {
             _context = context;
+            _tenantContext = tenantContext;
         }
 
-        public async Task<IEnumerable<Category>> GetByTenantAsync(int tenantId)
+        public async Task<IEnumerable<Category>> GetAllAsync()
         {
             return await _context.Categories
                 .Include(c => c.Items)
-                .Where(c => c.TenantId == tenantId && c.IsActive)
+                .Where(c => c.TenantId == _tenantContext.TenantId && c.IsActive)
                 .ToListAsync();
         }
 
@@ -30,11 +33,12 @@ namespace Infrastructure.Services
         {
             return await _context.Categories
                 .Include(c => c.Items)
-                .FirstOrDefaultAsync(c => c.Id == id);
+                .FirstOrDefaultAsync(c => c.Id == id && c.TenantId == _tenantContext.TenantId);
         }
 
         public async Task<int> AddAsync(Category category)
         {
+            category.TenantId = _tenantContext.TenantId;
             _context.Categories.Add(category);
             await _context.SaveChangesAsync();
             return category.Id;
@@ -42,7 +46,8 @@ namespace Infrastructure.Services
 
         public async Task<bool> UpdateAsync(int id, Category updatedCategory)
         {
-            var existing = await _context.Categories.FindAsync(id);
+            var existing = await _context.Categories
+                .FirstOrDefaultAsync(c => c.Id == id && c.TenantId == _tenantContext.TenantId);
             if (existing == null) return false;
 
             existing.Name = updatedCategory.Name;
@@ -55,7 +60,8 @@ namespace Infrastructure.Services
 
         public async Task<bool> DeleteAsync(int id)
         {
-            var existing = await _context.Categories.FindAsync(id);
+            var existing = await _context.Categories
+                .FirstOrDefaultAsync(c => c.Id == id && c.TenantId == _tenantContext.TenantId);
             if (existing == null) return false;
 
             _context.Categories.Remove(existing);

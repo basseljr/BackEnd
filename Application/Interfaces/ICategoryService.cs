@@ -9,7 +9,7 @@ namespace Application.Interfaces
 {
     public interface ICategoryService
     {
-        Task<IEnumerable<Category>> GetByTenantAsync(int tenantId);
+        Task<IEnumerable<Category>> GetAllAsync();
         Task<Category?> GetByIdAsync(int id);
         Task<int> AddAsync(Category category);
         Task<bool> UpdateAsync(int id, Category updatedCategory);

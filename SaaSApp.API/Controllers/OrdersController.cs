@@ -1,6 +1,8 @@
-﻿using Application.DTOs;
+﻿using Application.Common;
+using Application.DTOs;
 using Application.Interfaces;
 using Domain.Entities;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace SaaSApp.API.Controllers
@@ -10,7 +12,12 @@ namespace SaaSApp.API.Controllers
     public class OrdersController : ControllerBase
     {
         private readonly IOrderService _orderService;
-        public OrdersController(IOrderService orderService) => _orderService = orderService;
+        private readonly TenantContext _tenantContext;
+        public OrdersController(IOrderService orderService, TenantContext tenantContext)
+        {
+            _orderService = orderService;
+            _tenantContext = tenantContext;
+        }
 
         [HttpPost]
         public async Task<IActionResult> CreateOrder([FromBody] CreateOrderRequest request)
@@ -23,34 +30,36 @@ namespace SaaSApp.API.Controllers
         }
 
         [HttpGet("all")]
-        public async Task<IActionResult> GetAllOrders([FromQuery] int tenantId)
+        [Authorize(Roles = "Admin,Owner")]
+        public async Task<IActionResult> GetAllOrders()
         {
-            var orders = await _orderService.GetAllAsync(tenantId);
+            var orders = await _orderService.GetAllAsync();
             return Ok(orders);
         }
 
         [HttpGet("{id}")]
-        public async Task<IActionResult> GetOrder(int id, [FromQuery] int tenantId)
+        public async Task<IActionResult> GetOrder(int id)
         {
-            var order = await _orderService.GetByIdAsync(id, tenantId);
+            var order = await _orderService.GetByIdAsync(id);
             if (order == null) return NotFound();
             return Ok(order);
         }
 
         [HttpGet("history")]
-        public async Task<IActionResult> GetOrderHistory([FromQuery] string mobile, [FromQuery] int tenantId)
+        public async Task<IActionResult> GetOrderHistory([FromQuery] string mobile)
         {
             if (string.IsNullOrWhiteSpace(mobile))
                 return BadRequest("Mobile number is required.");
 
-            var orders = await _orderService.GetByCustomerMobileAsync(mobile, tenantId);
+            var orders = await _orderService.GetByCustomerMobileAsync(mobile);
             return Ok(orders);
         }
 
         [HttpPut("{id}/status")]
-        public async Task<IActionResult> UpdateOrderStatus(int id, [FromBody] UpdateOrderStatusRequest request, [FromQuery] int tenantId)
+        [Authorize(Roles = "Admin,Owner")]
+        public async Task<IActionResult> UpdateOrderStatus(int id, [FromBody] UpdateOrderStatusRequest request)
         {
-            var success = await _orderService.UpdateOrderStatusAsync(id, request.Status, tenantId);
+            var success = await _orderService.UpdateOrderStatusAsync(id, request.Status);
             if (!success)
                 return NotFound(new { message = "Order not found" });
 
