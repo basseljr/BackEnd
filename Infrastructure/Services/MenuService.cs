@@ -37,7 +37,11 @@ namespace Infrastructure.Services
                 Description = i.Description,
                 Price = i.Price,
                 Image = i.Image,
-                IsAvailable = i.IsAvailable
+                IsAvailable = i.IsAvailable,
+                StockQuantity = i.StockQuantity,
+                DiscountPercentage = i.DiscountPercentage,
+                FinalPrice = i.FinalPrice,
+                IsTrackStock = i.IsTrackStock
             });
         }
 
@@ -59,7 +63,11 @@ namespace Infrastructure.Services
                 Description = i.Description,
                 Price = i.Price,
                 Image = i.Image,
-                IsAvailable = i.IsAvailable
+                IsAvailable = i.IsAvailable,
+                StockQuantity = i.StockQuantity,
+                DiscountPercentage = i.DiscountPercentage,
+                FinalPrice = i.FinalPrice,
+                IsTrackStock = i.IsTrackStock
             };
         }
 
@@ -73,8 +81,17 @@ namespace Infrastructure.Services
                 Description = dto.Description,
                 Price = dto.Price,
                 Image = dto.Image,
-                IsAvailable = dto.IsAvailable
+                IsAvailable = dto.IsAvailable,
+                StockQuantity = dto.StockQuantity,
+                DiscountPercentage = dto.DiscountPercentage,
+                IsTrackStock = dto.IsTrackStock
             };
+
+            // If tracking stock and stock is zero, disable item
+            if (item.IsTrackStock && item.StockQuantity == 0)
+            {
+                item.IsAvailable = false;
+            }
 
             _context.Items.Add(item);
             await _context.SaveChangesAsync();
@@ -93,6 +110,15 @@ namespace Infrastructure.Services
             item.CategoryId = dto.CategoryId;
             item.Image = dto.Image;
             item.IsAvailable = dto.IsAvailable;
+            item.StockQuantity = dto.StockQuantity;
+            item.DiscountPercentage = dto.DiscountPercentage;
+            item.IsTrackStock = dto.IsTrackStock;
+
+            // If tracking stock and stock is zero, disable item
+            if (item.IsTrackStock && item.StockQuantity == 0)
+            {
+                item.IsAvailable = false;
+            }
 
             await _context.SaveChangesAsync();
             return true;
@@ -107,6 +133,42 @@ namespace Infrastructure.Services
             _context.Items.Remove(item);
             await _context.SaveChangesAsync();
             return true;
+        }
+
+        public async Task<MenuItemDto?> ToggleAvailabilityAsync(int id, bool enabled)
+        {
+            var item = await _context.Items
+                .Include(x => x.Category)
+                .FirstOrDefaultAsync(x => x.Id == id && x.TenantId == _tenantContext.TenantId);
+
+            if (item == null) return null;
+
+            // If tracking stock and stock is zero, cannot enable
+            if (item.IsTrackStock && item.StockQuantity == 0 && enabled)
+            {
+                // Return null to indicate conflict - controller will handle 409
+                return null;
+            }
+
+            item.IsAvailable = enabled;
+            await _context.SaveChangesAsync();
+
+            return new MenuItemDto
+            {
+                Id = item.Id,
+                TenantId = item.TenantId,
+                CategoryId = item.CategoryId,
+                CategoryName = item.Category?.Name ?? string.Empty,
+                Name = item.Name,
+                Description = item.Description,
+                Price = item.Price,
+                Image = item.Image,
+                IsAvailable = item.IsAvailable,
+                StockQuantity = item.StockQuantity,
+                DiscountPercentage = item.DiscountPercentage,
+                FinalPrice = item.FinalPrice,
+                IsTrackStock = item.IsTrackStock
+            };
         }
     }
 }

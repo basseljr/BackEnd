@@ -62,5 +62,23 @@ namespace SaaSApp.API.Controllers
             if (!success) return NotFound();
             return Ok(new { message = "Category deleted successfully" });
         }
+
+        [HttpPut("order")]
+        [Authorize(Roles = "Admin,Owner")]
+        public async Task<IActionResult> UpdateOrder([FromBody] IEnumerable<CategoryOrderDto> orderUpdates)
+        {
+            var success = await _categoryService.UpdateOrderAsync(orderUpdates);
+            if (!success) return StatusCode(403, new { message = "One or more categories not found or belong to different tenant" });
+            return Ok();
+        }
+
+        [HttpPut("{id}/availability")]
+        [Authorize(Roles = "Admin,Owner")]
+        public async Task<IActionResult> UpdateAvailability(int id, [FromQuery] bool enabled)
+        {
+            var category = await _categoryService.UpdateAvailabilityAsync(id, enabled);
+            if (category == null) return NotFound();
+            return Ok(category);
+        }
     }
 }

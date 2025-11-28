@@ -15,6 +15,8 @@ namespace Domain.Entities
         public string Name { get; set; } = string.Empty;
         public string? Image { get; set; }
         public bool IsActive { get; set; } = true;
+        public int DisplayOrder { get; set; } = 0;
+        public bool IsAvailable { get; set; } = true;
 
         public Tenant? Tenant { get; set; }
         public ICollection<Item> Items { get; set; } = new List<Item>();

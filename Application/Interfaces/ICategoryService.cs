@@ -1,4 +1,5 @@
-﻿using Domain.Entities;
+﻿using Application.DTOs;
+using Domain.Entities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,5 +15,7 @@ namespace Application.Interfaces
         Task<int> AddAsync(Category category);
         Task<bool> UpdateAsync(int id, Category updatedCategory);
         Task<bool> DeleteAsync(int id);
+        Task<bool> UpdateOrderAsync(IEnumerable<CategoryOrderDto> orderUpdates);
+        Task<CategoryDto?> UpdateAvailabilityAsync(int id, bool enabled);
     }
 }

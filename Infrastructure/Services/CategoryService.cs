@@ -1,4 +1,5 @@
 ﻿using Application.Common;
+using Application.DTOs;
 using Application.Interfaces;
 using Domain.Entities;
 using Microsoft.EntityFrameworkCore;
@@ -67,6 +68,55 @@ namespace Infrastructure.Services
             _context.Categories.Remove(existing);
             await _context.SaveChangesAsync();
             return true;
+        }
+
+        public async Task<bool> UpdateOrderAsync(IEnumerable<CategoryOrderDto> orderUpdates)
+        {
+            var tenantId = _tenantContext.TenantId;
+            var updates = orderUpdates.ToList();
+
+            // Load all categories that need to be updated
+            var categoryIds = updates.Select(u => u.Id).ToList();
+            var categories = await _context.Categories
+                .Where(c => categoryIds.Contains(c.Id) && c.TenantId == tenantId)
+                .ToListAsync();
+
+            // Validate all categories belong to tenant
+            if (categories.Count != updates.Count)
+            {
+                return false; // Some categories not found or belong to different tenant
+            }
+
+            // Update DisplayOrder for each category
+            foreach (var update in updates)
+            {
+                var category = categories.First(c => c.Id == update.Id);
+                category.DisplayOrder = update.DisplayOrder;
+            }
+
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
+        public async Task<CategoryDto?> UpdateAvailabilityAsync(int id, bool enabled)
+        {
+            var tenantId = _tenantContext.TenantId;
+            var category = await _context.Categories
+                .FirstOrDefaultAsync(c => c.Id == id && c.TenantId == tenantId);
+
+            if (category == null) return null;
+
+            category.IsAvailable = enabled;
+            await _context.SaveChangesAsync();
+
+            return new CategoryDto
+            {
+                Id = category.Id,
+                Name = category.Name,
+                ImageUrl = category.Image ?? string.Empty,
+                DisplayOrder = category.DisplayOrder,
+                IsAvailable = category.IsAvailable
+            };
         }
     }
 }

@@ -14,5 +14,6 @@ namespace Application.Interfaces
         Task<int> AddAsync(MenuItemDto dto);
         Task<bool> UpdateAsync(int id, MenuItemDto dto);
         Task<bool> DeleteAsync(int id);
+        Task<MenuItemDto?> ToggleAvailabilityAsync(int id, bool enabled);
     }
 }

@@ -17,6 +17,12 @@ namespace Domain.Entities
         public decimal Price { get; set; }
         public string? Image { get; set; }
         public bool IsAvailable { get; set; } = true;
+        public int StockQuantity { get; set; } = 0;
+        public double DiscountPercentage { get; set; } = 0;
+        public bool IsTrackStock { get; set; } = true;
+
+        // Computed property (NOT stored in DB)
+        public decimal FinalPrice => Price - (Price * (decimal)DiscountPercentage / 100m);
 
         public int? StockId { get; set; }
         public Stock? Stock { get; set; }

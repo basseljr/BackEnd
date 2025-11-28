@@ -11,5 +11,13 @@ namespace Application.DTOs
         public int Id { get; set; }
         public string Name { get; set; }
         public string ImageUrl { get; set; }
+        public int DisplayOrder { get; set; }
+        public bool IsAvailable { get; set; }
+    }
+
+    public class CategoryOrderDto
+    {
+        public int Id { get; set; }
+        public int DisplayOrder { get; set; }
     }
 }

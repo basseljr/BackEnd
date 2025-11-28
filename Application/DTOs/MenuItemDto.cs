@@ -17,5 +17,9 @@ namespace Application.DTOs
         public decimal Price { get; set; }
         public string? Image { get; set; }
         public bool IsAvailable { get; set; } = true;
+        public int StockQuantity { get; set; }
+        public double DiscountPercentage { get; set; }
+        public decimal FinalPrice { get; set; }
+        public bool IsTrackStock { get; set; }
     }
 }

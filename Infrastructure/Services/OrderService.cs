@@ -21,9 +21,10 @@ namespace Infrastructure.Services
 
         public async Task<int> CreateOrderAsync(CreateOrderRequest request)
         {
+            var tenantId = _tenantContext.TenantId;
             var order = new Order
             {
-                TenantId = _tenantContext.TenantId,
+                TenantId = tenantId,
                 CustomerName = request.CustomerName,
                 Email = request.Email,
                 Mobile = request.Mobile,
@@ -41,6 +42,32 @@ namespace Infrastructure.Services
 
             _context.Orders.Add(order);
             await _context.SaveChangesAsync();
+
+            // Reduce stock for all order items
+            foreach (var orderItem in order.Items)
+            {
+                if (orderItem.ItemId.HasValue)
+                {
+                    var menuItem = await _context.Items
+                        .Where(x => x.Id == orderItem.ItemId.Value && x.TenantId == tenantId)
+                        .FirstOrDefaultAsync();
+
+                    if (menuItem != null && menuItem.IsTrackStock)
+                    {
+                        menuItem.StockQuantity -= orderItem.Quantity;
+
+                        if (menuItem.StockQuantity <= 0)
+                        {
+                            menuItem.StockQuantity = 0;
+                            menuItem.IsAvailable = false;
+                        }
+                    }
+                }
+            }
+
+            // Save stock changes once after processing all items
+            await _context.SaveChangesAsync();
+
             return order.Id;
         }
 

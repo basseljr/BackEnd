@@ -59,5 +59,20 @@ namespace SaaSApp.API.Controllers
             if (!success) return NotFound();
             return Ok(new { message = "Item deleted successfully" });
         }
+
+        [HttpPut("items/{id}/availability")]
+        [Authorize(Roles = "Admin,Owner")]
+        public async Task<IActionResult> ToggleAvailability(int id, [FromQuery] bool enabled)
+        {
+            var item = await _menuService.ToggleAvailabilityAsync(id, enabled);
+            if (item == null)
+            {
+                // Check if it's a conflict (zero stock) or not found
+                var existing = await _menuService.GetByIdAsync(id);
+                if (existing == null) return NotFound();
+                return Conflict(new { message = "Cannot enable item with zero stock" });
+            }
+            return Ok(item);
+        }
     }
 }

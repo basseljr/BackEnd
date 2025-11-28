@@ -133,22 +133,82 @@ namespace Infrastructure.Services
                 }
             }
 
-            // Return **every order** as a point
-            var results = await query
-                .OrderBy(o => o.CreatedAt)
-                .Select(o => new
-                {
-                    Label = o.CreatedAt.ToString("HH:mm"),  // show TIME, so points are separate
-                    Value = o.Total
-                })
-                .ToListAsync();
-
-            return new SalesSummaryDto
+            // Group by based on period - use anonymous types for grouping keys
+            if (period == "daily")
             {
-                Labels = results.Select(r => r.Label).ToList(),
-                Values = results.Select(r => r.Value).ToList(),
-                Period = period
-            };
+                // DAILY: Group by hour
+                var raw = await query
+                    .GroupBy(o => new
+                    {
+                        o.CreatedAt.Year,
+                        o.CreatedAt.Month,
+                        o.CreatedAt.Day,
+                        o.CreatedAt.Hour
+                    })
+                    .Select(g => new
+                    {
+                        g.Key.Year,
+                        g.Key.Month,
+                        g.Key.Day,
+                        g.Key.Hour,
+                        Total = g.Sum(x => x.Total)
+                    })
+                    .OrderBy(g => g.Year)
+                    .ThenBy(g => g.Month)
+                    .ThenBy(g => g.Day)
+                    .ThenBy(g => g.Hour)
+                    .ToListAsync();
+
+                // Format labels AFTER SQL materialization
+                var grouped = raw.Select(g => new
+                {
+                    Label = $"{g.Hour}:00",
+                    g.Total
+                }).ToList();
+
+                return new SalesSummaryDto
+                {
+                    Labels = grouped.Select(x => x.Label).ToList(),
+                    Values = grouped.Select(x => x.Total).ToList(),
+                    Period = period
+                };
+            }
+            else
+            {
+                // WEEKLY + MONTHLY: Group by date
+                var raw = await query
+                    .GroupBy(o => new
+                    {
+                        o.CreatedAt.Year,
+                        o.CreatedAt.Month,
+                        o.CreatedAt.Day
+                    })
+                    .Select(g => new
+                    {
+                        g.Key.Year,
+                        g.Key.Month,
+                        g.Key.Day,
+                        Total = g.Sum(x => x.Total)
+                    })
+                    .OrderBy(g => g.Year)
+                    .ThenBy(g => g.Month)
+                    .ThenBy(g => g.Day)
+                    .ToListAsync();
+
+                // Format labels AFTER SQL materialization
+                var grouped = raw.Select(g => new
+                {
+                    Label = $"{g.Year}-{g.Month:D2}-{g.Day:D2}",
+                    g.Total
+                }).ToList();
+
+                return new SalesSummaryDto
+                {
+                    Labels = grouped.Select(x => x.Label).ToList(),
+                    Values = grouped.Select(x => x.Total).ToList(),
+                    Period = period
+                };
+            }
         }
 
 
