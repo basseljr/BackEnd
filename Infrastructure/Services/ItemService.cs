@@ -23,11 +23,7 @@ namespace Infrastructure.Services
 
         public async Task<IEnumerable<Item>> GetByCategoryAsync(int categoryId)
         {
-            return await _context.Items
-                .Where(i => i.CategoryId == categoryId && 
-                           i.TenantId == _tenantContext.TenantId && 
-                           i.IsAvailable)
-                .ToListAsync();
+            return await _context.Items.Where(i => i.CategoryId == categoryId && i.TenantId == _tenantContext.TenantId && i.IsAvailable).ToListAsync();
         }
 
         public async Task<Item?> GetByIdAsync(int id)

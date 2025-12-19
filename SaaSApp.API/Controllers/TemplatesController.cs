@@ -57,6 +57,8 @@ namespace SaaSApp.API.Controllers
         }
 
 
+
+        //this another chat told me its for production i dont know if the below GetByDomain also work for production
         [HttpGet("domainproduction")]
         public async Task<IActionResult> GetByDomainforproduction()
         {

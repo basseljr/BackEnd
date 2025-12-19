@@ -7,6 +7,8 @@ using Microsoft.IdentityModel.Tokens;
 using SaaSApp.API.Middleware;
 using SaaSApp.Infrastructure.Data;
 using SaaSApp.Infrastructure.Services;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -31,8 +33,7 @@ builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
     options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-})
-.AddJwtBearer(options =>
+}).AddJwtBearer(options =>
 {
     options.TokenValidationParameters = new TokenValidationParameters
     {
@@ -42,9 +43,45 @@ builder.Services.AddAuthentication(options =>
         ValidateIssuerSigningKey = true,
         ValidIssuer = jwtIssuer,
         ValidAudience = jwtAudience,
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret))
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret)),
+        NameClaimType = "email"
+    };
+
+    options.Events = new JwtBearerEvents
+    {
+        OnTokenValidated = context =>
+        {
+            var principal = context.Principal;
+
+            var emailClaim = principal?.Claims.FirstOrDefault(c => c.Type == "email");
+            if (emailClaim != null && principal?.Identity is ClaimsIdentity identity)
+            {
+                if (identity.FindFirst(ClaimTypes.Name) == null)
+                {
+                    identity.AddClaim(new Claim(ClaimTypes.Name, emailClaim.Value));
+                }
+            }
+
+            return Task.CompletedTask;
+        }
     };
 });
+
+//.AddJwtBearer(options =>
+//{
+//    options.TokenValidationParameters = new TokenValidationParameters
+//    {
+//        ValidateIssuer = true,
+//        ValidateAudience = true,
+//        ValidateLifetime = true,
+//        ValidateIssuerSigningKey = true,
+//        ValidIssuer = jwtIssuer,
+//        ValidAudience = jwtAudience,
+//        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret)),
+//        NameClaimType = JwtRegisteredClaimNames.Email
+
+//    };
+//});
 
 builder.Services.AddAuthorization();
 
@@ -57,6 +94,9 @@ builder.Services.AddScoped<IInventoryService, InventoryService>();
 builder.Services.AddScoped<ITemplateService, TemplateService>();
 builder.Services.AddScoped<ITenantService, TenantService>();
 builder.Services.AddScoped<ITenantCustomizationService, TenantCustomizationService>();
+builder.Services.AddScoped<ITemplateFlowService, TemplateFlowService>();
+
+builder.Services.AddScoped<ITemplateDraftService, TemplateDraftService>();
 
 
 

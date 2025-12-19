@@ -8,12 +8,9 @@ using System.Threading.Tasks;
 
 namespace Application.Interfaces
 {
-    public interface ITenantService
+    public interface ITemplateDraftService
     {
-        Task<TenantDto?> GetByDomainAsync(string domain);
-     
-        Task<Tenant?> GetBySubdomainAsync(string subdomain);
-        
-
+        Task<TemplateDraft?> GetDraftByUserEmailAsync(string email);
+        Task<TemplateDraft> UpdateOrCreateDraftAsync(SaveDraftDto dto);
     }
 }

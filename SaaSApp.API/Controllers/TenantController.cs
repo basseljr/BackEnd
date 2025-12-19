@@ -24,4 +24,23 @@ public class TenantController : ControllerBase
 
         return Ok(new { tenantId = tenant.Id });
     }
+
+    [HttpGet("by-subdomain/{sub}")]
+    public async Task<IActionResult> GetBySubdomain(string sub)
+    {
+        var tenant = await _tenantService.GetBySubdomainAsync(sub);
+
+        if (tenant == null)
+            return NotFound(new { message = "Tenant not found" });
+
+        return Ok(new
+        {
+            tenantId = tenant.Id,
+            subdomain = tenant.Subdomain,
+            templateId = tenant.TemplateId,
+            customizationData = tenant.Customization?.CustomizationData ?? "{}"
+
+        });
+    }
+
 }

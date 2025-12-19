@@ -21,6 +21,8 @@ namespace Domain.Entities
         public ICollection<Order> Orders { get; set; } = new List<Order>();
         public ICollection<User> Users { get; set; } = new List<User>(); // if staff
         public TenantCustomization? Customization { get; set; }
+        public int? TemplateId { get; set; } 
+        public bool IsPublished { get; set; } = false;
     }
 
 }
