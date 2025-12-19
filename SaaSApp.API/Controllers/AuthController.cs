@@ -1,37 +1,79 @@
+using Application.DTOs;
 using Application.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace SaaSApp.API.Controllers
 {
     [ApiController]
-    [Route("[controller]")]
+    [Route("auth")]
+    //[Authorize]
     public class AuthController : ControllerBase
     {
-        private readonly IAuthService _authService;
+        private readonly IAuthService _auth;
 
-        public AuthController(IAuthService authService)
+        public AuthController(IAuthService auth)
         {
-            _authService = authService;
+            _auth = auth;
         }
 
-        [HttpPost("login")]
-        public async Task<IActionResult> Login([FromBody] LoginRequest request)
+        // ======================
+        // ADMIN LOGIN
+        // ======================
+        [HttpPost("admin/login")]
+        public async Task<IActionResult> AdminLogin(AdminLoginRequest req)
         {
-            if (string.IsNullOrWhiteSpace(request.Email) || string.IsNullOrWhiteSpace(request.Password))
-                return BadRequest(new { message = "Email and password are required" });
+            var result = await _auth.AdminLoginAsync(req.Email, req.Password);
+            if (result == null)
+                return Unauthorized(new { message = "Invalid admin credentials" });
 
-            var token = await _authService.AuthenticateAsync(request.Email, request.Password);
-
-            if (token == null)
-                return Unauthorized(new { message = "Invalid credentials" });
-
-            return Ok(new { token });
+            return Ok(result);
         }
-    }
 
-    public class LoginRequest
-    {
-        public string Email { get; set; } = string.Empty;
-        public string Password { get; set; } = string.Empty;
+        // ======================
+        // TENANT OWNER LOGIN
+        // ======================
+        [HttpPost("tenant/login")]
+        public async Task<IActionResult> TenantLogin(TenantOwnerLoginRequest req)
+        {
+            var result = await _auth.TenantOwnerLoginAsync(req.Email, req.Password);
+            if (result == null)
+                return Unauthorized(new { message = "Invalid tenant owner credentials" });
+
+            return Ok(result);
+        }
+
+        // ======================
+        // END USER LOGIN
+        // ======================
+        [HttpPost("user/login")]
+        public async Task<IActionResult> EndUserLogin(EndUserLoginRequest req)
+        {
+            var result = await _auth.EndUserLoginAsync(req.Email, req.Password, req.TenantId);
+            if (result == null)
+                return Unauthorized(new { message = "Invalid user credentials" });
+
+            return Ok(result);
+        }
+
+        // ======================
+        // REGISTER TENANT OWNER
+        // ======================
+        [HttpPost("tenant/register")]
+        public async Task<IActionResult> RegisterTenantOwner(TenantOwnerRegisterRequest req)
+        {
+            var result = await _auth.RegisterTenantOwnerAsync(req);
+            return Ok(result);
+        }
+
+        // ======================
+        // REGISTER END USER
+        // ======================
+        [HttpPost("user/register")]
+        public async Task<IActionResult> RegisterEndUser(EndUserRegisterRequest req)
+        {
+            var result = await _auth.RegisterEndUserAsync(req);
+            return Ok(result);
+        }
     }
 }

@@ -1,5 +1,6 @@
 ﻿using Application.DTOs;
 using Application.Interfaces;
+using Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using SaaSApp.Infrastructure.Data;
 using System;
@@ -36,5 +37,14 @@ namespace Infrastructure.Services
                 CustomizationData = tenant.Customization?.CustomizationData
             };
         }
+
+        public async Task<Tenant?> GetBySubdomainAsync(string sub)
+        {
+            return await _context.Tenants
+                .Include(t => t.Customization)
+                .FirstOrDefaultAsync(t => t.Subdomain == sub);
+        }
+
+
     }
 }

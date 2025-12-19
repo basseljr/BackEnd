@@ -18,11 +18,14 @@ namespace SaaSApp.Infrastructure.Data
         // Multi-tenant tables
         public DbSet<Tenant> Tenants { get; set; }
         public DbSet<TenantCustomization> TenantCustomizations { get; set; }
+        public DbSet<TenantSettings> TenantSettings { get; set; }
         public DbSet<Discount> Discounts { get; set; }
         public DbSet<DiscountCategory> DiscountCategories { get; set; }
         public DbSet<DiscountItem> DiscountItems { get; set; }
         public DbSet<Stock> Stocks { get; set; }
         public DbSet<Subscription> Subscriptions { get; set; }
+        public DbSet<TemplateDraft> TemplateDrafts { get; set; }
+
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -165,6 +168,38 @@ namespace SaaSApp.Infrastructure.Data
                 .WithMany()
                 .HasForeignKey(s => s.TenantId)
                 .OnDelete(DeleteBehavior.Restrict);       // FIXED
+
+            modelBuilder.Entity<TenantSettings>()
+                .HasOne(ts => ts.Tenant)
+                .WithOne()
+                .HasForeignKey<TenantSettings>(ts => ts.TenantId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<TemplateDraft>()
+               .HasKey(t => t.Id);
+
+            modelBuilder.Entity<User>()
+            .HasIndex(u => u.Email)
+            .IsUnique();
+
+            modelBuilder.Entity<Tenant>()
+              .HasOne(t => t.Customization)
+              .WithOne(c => c.Tenant)
+              .HasForeignKey<TenantCustomization>(c => c.TenantId)
+              .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<Tenant>()
+             .HasOne(t => t.Customization)
+             .WithOne(c => c.Tenant)
+             .HasForeignKey<TenantCustomization>(c => c.TenantId)
+             .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<TemplateDraft>()
+            .HasOne(d => d.User)
+            .WithMany(u => u.Drafts)
+            .HasForeignKey(d => d.UserId)
+            .OnDelete(DeleteBehavior.SetNull);
+
         }
 
     }
