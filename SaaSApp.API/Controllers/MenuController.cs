@@ -35,7 +35,7 @@ namespace SaaSApp.API.Controllers
         }
 
         [HttpPost("item")]
-        [Authorize(Roles = "Admin,Owner")]
+        [Authorize(Roles = "Admin,Owner,Customer")]
         public async Task<IActionResult> AddItem([FromBody] MenuItemDto dto)
         {
             var id = await _menuService.AddAsync(dto);
@@ -43,7 +43,7 @@ namespace SaaSApp.API.Controllers
         }
 
         [HttpPut("item/{id}")]
-        [Authorize(Roles = "Admin,Owner")]
+        [Authorize(Roles = "Admin,Owner,Customer")]
         public async Task<IActionResult> UpdateItem(int id, [FromBody] MenuItemDto dto)
         {
             var success = await _menuService.UpdateAsync(id, dto);
@@ -52,7 +52,7 @@ namespace SaaSApp.API.Controllers
         }
 
         [HttpDelete("item/{id}")]
-        [Authorize(Roles = "Admin,Owner")]
+        [Authorize(Roles = "Admin,Owner,Customer")]
         public async Task<IActionResult> DeleteItem(int id)
         {
             var success = await _menuService.DeleteAsync(id);
@@ -61,7 +61,7 @@ namespace SaaSApp.API.Controllers
         }
 
         [HttpPut("items/{id}/availability")]
-        [Authorize(Roles = "Admin,Owner")]
+        [Authorize(Roles = "Admin,Owner,Customer")]
         public async Task<IActionResult> ToggleAvailability(int id, [FromQuery] bool enabled)
         {
             var item = await _menuService.ToggleAvailabilityAsync(id, enabled);

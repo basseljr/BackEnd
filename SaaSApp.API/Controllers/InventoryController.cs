@@ -22,7 +22,7 @@ namespace SaaSApp.API.Controllers
         }
 
         [HttpGet]
-        [Authorize(Roles = "Admin,Owner")]
+        [Authorize(Roles = "Admin,Owner,Customer")]
         public async Task<IActionResult> GetAll()
         {
             var items = await _inventoryService.GetAllAsync();
@@ -30,7 +30,7 @@ namespace SaaSApp.API.Controllers
         }
 
         [HttpPut("{id}/stock")]
-        [Authorize(Roles = "Admin,Owner")]
+        [Authorize(Roles = "Admin,Owner,Customer")]
         public async Task<IActionResult> UpdateStock(int id, [FromBody] UpdateStockDto dto)
         {
             var item = await _inventoryService.UpdateStockAsync(id, dto);
@@ -39,7 +39,7 @@ namespace SaaSApp.API.Controllers
         }
 
         [HttpPut("bulk")]
-        [Authorize(Roles = "Admin,Owner")]
+        [Authorize(Roles = "Admin,Owner,Customer")]
         public async Task<IActionResult> BulkUpdateStock([FromBody] IEnumerable<BulkStockUpdateDto> updates)
         {
             var success = await _inventoryService.BulkUpdateStockAsync(updates);

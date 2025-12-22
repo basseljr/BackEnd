@@ -30,7 +30,7 @@ namespace SaaSApp.API.Controllers
         }
 
         [HttpGet("all")]
-        [Authorize(Roles = "Admin,Owner")]
+        [Authorize(Roles = "Admin,Owner,Customer")]
         public async Task<IActionResult> GetAllOrders()
         {
             var orders = await _orderService.GetAllAsync();
@@ -56,7 +56,7 @@ namespace SaaSApp.API.Controllers
         }
 
         [HttpPut("{id}/status")]
-        [Authorize(Roles = "Admin,Owner")]
+        [Authorize(Roles = "Admin,Owner,Customer")]
         public async Task<IActionResult> UpdateOrderStatus(int id, [FromBody] UpdateOrderStatusRequest request)
         {
             var success = await _orderService.UpdateOrderStatusAsync(id, request.Status);

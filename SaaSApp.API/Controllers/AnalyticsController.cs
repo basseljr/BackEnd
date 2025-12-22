@@ -7,7 +7,7 @@ namespace SaaSApp.API.Controllers
 {
     [ApiController]
     [Route("[controller]")]
-    [Authorize(Roles = "Admin,Owner")]
+    [Authorize(Roles = "Admin,Owner,Customer")]
     public class AnalyticsController : ControllerBase
     {
         private readonly IAnalyticsService _analyticsService;
