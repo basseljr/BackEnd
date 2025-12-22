@@ -37,7 +37,7 @@ namespace SaaSApp.API.Controllers
         }
 
         [HttpPost]
-        [Authorize(Roles = "Admin,Owner")]
+        [Authorize(Roles = "Admin,Owner,Customer")]
         public async Task<IActionResult> Create([FromBody] Category category)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
@@ -46,7 +46,7 @@ namespace SaaSApp.API.Controllers
         }
 
         [HttpPut("{id}")]
-        [Authorize(Roles = "Admin,Owner")]
+        [Authorize(Roles = "Admin,Owner,Customer")]
         public async Task<IActionResult> Update(int id, [FromBody] Category updatedCategory)
         {
             var success = await _categoryService.UpdateAsync(id, updatedCategory);
@@ -55,7 +55,7 @@ namespace SaaSApp.API.Controllers
         }
 
         [HttpDelete("{id}")]
-        [Authorize(Roles = "Admin,Owner")]
+        [Authorize(Roles = "Admin,Owner,Customer")]
         public async Task<IActionResult> Delete(int id)
         {
             var success = await _categoryService.DeleteAsync(id);
@@ -64,7 +64,7 @@ namespace SaaSApp.API.Controllers
         }
 
         [HttpPut("order")]
-        [Authorize(Roles = "Admin,Owner")]
+        [Authorize(Roles = "Admin,Owner,Customer")]
         public async Task<IActionResult> UpdateOrder([FromBody] IEnumerable<CategoryOrderDto> orderUpdates)
         {
             var success = await _categoryService.UpdateOrderAsync(orderUpdates);
@@ -73,7 +73,7 @@ namespace SaaSApp.API.Controllers
         }
 
         [HttpPut("{id}/availability")]
-        [Authorize(Roles = "Admin,Owner")]
+        [Authorize(Roles = "Admin,Owner,Customer")]
         public async Task<IActionResult> UpdateAvailability(int id, [FromQuery] bool enabled)
         {
             var category = await _categoryService.UpdateAvailabilityAsync(id, enabled);

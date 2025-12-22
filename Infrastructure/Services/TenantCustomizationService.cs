@@ -43,12 +43,19 @@ namespace Infrastructure.Services
             var existing = await _context.TenantCustomizations
                 .FirstOrDefaultAsync(c => c.TenantId == _tenantContext.TenantId);
 
+            var tenant = await _context.Tenants.FirstOrDefaultAsync(t => t.Id == _tenantContext.TenantId);
+
+            if (tenant != null)
+            {
+                existing.TemplateId = (int)tenant.TemplateId;
+            }
+
             if (existing == null)
             {
                 var newCustomization = new TenantCustomization
                 {
                     TenantId = _tenantContext.TenantId,
-                    TemplateId = dto.TemplateId,
+                    TemplateId = (int)tenant.TemplateId,
                     CustomizationData = dto.CustomizationData
                 };
                 _context.TenantCustomizations.Add(newCustomization);
@@ -56,8 +63,8 @@ namespace Infrastructure.Services
             else
             {
                 existing.CustomizationData = dto.CustomizationData;
-                existing.TemplateId = dto.TemplateId;
-                existing.LastModified = DateTime.UtcNow;
+                existing.TemplateId = (int)tenant.TemplateId;
+                existing.LastModified = DateTime.Now;
                 _context.TenantCustomizations.Update(existing);
             }
 

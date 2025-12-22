@@ -25,7 +25,7 @@ public class TenantCustomizationsController : ControllerBase
     }
 
     [HttpPost]
-    [Authorize(Roles = "Admin,Owner")]
+    [Authorize(Roles = "Admin,Owner,Customer")]
     public async Task<IActionResult> SaveCustomization([FromBody] TenantCustomizationDto dto)
     {
         await _service.SaveCustomizationAsync(dto);
