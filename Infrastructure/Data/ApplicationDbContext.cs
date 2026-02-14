@@ -25,6 +25,10 @@ namespace SaaSApp.Infrastructure.Data
         public DbSet<Stock> Stocks { get; set; }
         public DbSet<Subscription> Subscriptions { get; set; }
         public DbSet<TemplateDraft> TemplateDrafts { get; set; }
+        public DbSet<SubscriptionPlan> SubscriptionPlans { get; set; }
+        public DbSet<PaymentGatewayType> PaymentGatewayTypes { get; set; }
+        public DbSet<TenantPaymentSettings> TenantPaymentSettings { get; set; }
+        public DbSet<PaymentWebhookEvent> PaymentWebhookEvents { get; set; }
 
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -52,6 +56,35 @@ namespace SaaSApp.Infrastructure.Data
                     Category = "Food & Drink"
                 }
             );
+
+
+            modelBuilder.Entity<SubscriptionPlan>().HasData(
+                new SubscriptionPlan
+                {
+                    Id = 1,
+                    Name = "Basic",
+                    Description = "For small shops",
+                    PriceMonthly = 10,
+                    PriceYearly = 100
+                },
+                new SubscriptionPlan
+                {
+                    Id = 2,
+                    Name = "Pro",
+                    Description = "For growing businesses",
+                    PriceMonthly = 25,
+                    PriceYearly = 250
+                },
+                new SubscriptionPlan
+                {
+                    Id = 3,
+                    Name = "Enterprise",
+                    Description = "Full features, priority support",
+                    PriceMonthly = 50,
+                    PriceYearly = 500
+                }
+            );
+
 
             // ===============================
             //      TENANT RELATIONSHIPS
@@ -199,6 +232,11 @@ namespace SaaSApp.Infrastructure.Data
             .WithMany(u => u.Drafts)
             .HasForeignKey(d => d.UserId)
             .OnDelete(DeleteBehavior.SetNull);
+
+            modelBuilder.Entity<PaymentWebhookEvent>()
+            .HasIndex(x => new { x.Gateway, x.ReferenceId, x.EventType })
+            .IsUnique();
+
 
         }
 

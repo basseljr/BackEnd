@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using SaaSApp.Infrastructure.Data;
 
@@ -11,9 +12,11 @@ using SaaSApp.Infrastructure.Data;
 namespace Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260210171018_AddPaymentWebhookEvents")]
+    partial class AddPaymentWebhookEvents
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -229,9 +232,6 @@ namespace Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<DateTime?>("PaidAt")
-                        .HasColumnType("datetime2");
-
                     b.Property<string>("PaymentStatus")
                         .HasColumnType("nvarchar(max)");
 
@@ -320,23 +320,17 @@ namespace Infrastructure.Migrations
 
                     b.Property<string>("EventType")
                         .IsRequired()
-                        .HasColumnType("nvarchar(450)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Gateway")
                         .IsRequired()
-                        .HasColumnType("nvarchar(450)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("InvoiceId")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<bool>("IsFailed")
-                        .HasColumnType("bit");
-
                     b.Property<bool>("IsProcessed")
                         .HasColumnType("bit");
-
-                    b.Property<DateTime?>("LastRetryAt")
-                        .HasColumnType("datetime2");
 
                     b.Property<DateTime>("OccurredAt")
                         .HasColumnType("datetime2");
@@ -360,15 +354,9 @@ namespace Infrastructure.Migrations
 
                     b.Property<string>("ReferenceId")
                         .IsRequired()
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<int>("RetryCount")
-                        .HasColumnType("int");
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("Gateway", "ReferenceId", "EventType")
-                        .IsUnique();
 
                     b.ToTable("PaymentWebhookEvents");
                 });
@@ -415,20 +403,11 @@ namespace Infrastructure.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<DateTime?>("ActivatedAt")
-                        .HasColumnType("datetime2");
-
                     b.Property<string>("BillingCycle")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime?>("EndDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime?>("ExpiredAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime?>("GraceEndDate")
                         .HasColumnType("datetime2");
 
                     b.Property<string>("InvoiceId")

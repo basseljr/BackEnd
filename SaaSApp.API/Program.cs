@@ -1,5 +1,7 @@
 using Application.Common;
 using Application.Interfaces;
+using Infrastructure.BackgroundServices;
+using Infrastructure.Middleware;
 using Infrastructure.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
@@ -10,6 +12,7 @@ using SaaSApp.Infrastructure.Services;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -97,6 +100,20 @@ builder.Services.AddScoped<ITenantCustomizationService, TenantCustomizationServi
 builder.Services.AddScoped<ITemplateFlowService, TemplateFlowService>();
 
 builder.Services.AddScoped<ITemplateDraftService, TemplateDraftService>();
+builder.Services.AddScoped<IMyFatoorahService, MyFatoorahService>();
+builder.Services.AddScoped<ISubscriptionService, SubscriptionService>();
+
+builder.Services.AddHttpClient<MyFatoorahGateway>();
+builder.Services.AddScoped<MyFatoorahGateway>();
+builder.Services.AddScoped<IPaymentGateway, MyFatoorahGateway>();
+builder.Services.AddScoped<IPaymentGatewayFactory, PaymentGatewayFactory>();
+builder.Services.AddScoped<ITenantPaymentSettingsService, TenantPaymentSettingsService>();
+builder.Services.AddScoped<IMyFatoorahWebhookService, MyFatoorahWebhookService>();
+builder.Services.AddScoped<IPaymentWebhookAuditService, PaymentWebhookAuditService>();
+builder.Services.AddScoped<IPaymentSignatureValidator, MyFatoorahSignatureValidator>();
+
+builder.Services.AddHostedService<WebhookRetryWorker>();
+builder.Services.AddHostedService<SubscriptionExpiryWorker>();
 
 
 
@@ -160,6 +177,8 @@ app.UseCors("AllowLocalhostSubdomains");
 app.UseMiddleware<TenantMiddleware>();
 
 app.UseAuthentication();
+app.UseMiddleware<SubscriptionGuardMiddleware>();
+
 app.UseAuthorization();
 
 app.MapControllers();

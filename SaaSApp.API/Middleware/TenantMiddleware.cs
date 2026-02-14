@@ -22,6 +22,20 @@ namespace SaaSApp.API.Middleware
                 return;
             }
 
+
+            var path = context.Request.Path.Value?.ToLower();
+
+            // ? Skip tenant validation for payment callbacks
+            if (path != null &&
+                (
+                    path.StartsWith("/orders/callback") ||
+                    path.StartsWith("/api/subscriptions/callback")
+                ))
+            {
+                await _next(context);
+                return;
+            }
+
             // Get X-Tenant-Id header
             if (!context.Request.Headers.TryGetValue("X-Tenant-Id", out var tenantIdHeader))
             {

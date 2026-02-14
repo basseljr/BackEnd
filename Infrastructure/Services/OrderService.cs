@@ -3,6 +3,7 @@ using Application.DTOs;
 using Application.Interfaces;
 using Domain.Entities;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using SaaSApp.Infrastructure.Data;
 using System.Linq;
 using System.Threading.Tasks;
@@ -13,10 +14,22 @@ namespace Infrastructure.Services
     {
         private readonly AppDbContext _context;
         private readonly TenantContext _tenantContext;
-        public OrderService(AppDbContext context, TenantContext tenantContext)
+        private readonly IConfiguration _config;
+        private readonly IPaymentGatewayFactory _gatewayFactory;
+        private readonly IMyFatoorahService _myFatoorah;
+
+        public OrderService(
+            AppDbContext context,
+            TenantContext tenantContext,
+            IConfiguration config,
+            IPaymentGatewayFactory gatewayFactory,
+            IMyFatoorahService myFatoorah)
         {
             _context = context;
             _tenantContext = tenantContext;
+            _config = config;
+            _gatewayFactory = gatewayFactory;
+            _myFatoorah = myFatoorah;
         }
 
         public async Task<int> CreateOrderAsync(CreateOrderRequest request)
@@ -142,5 +155,172 @@ namespace Infrastructure.Services
             await _context.SaveChangesAsync();
             return true;
         }
+
+
+        public async Task<string> CreateOrderPaymentLinkAsync(int orderId)
+        {
+            var tenantId = _tenantContext.TenantId;
+            var order = await _context.Orders
+                .FirstOrDefaultAsync(o => o.Id == orderId && o.TenantId == tenantId);
+
+            if (order == null)
+                throw new Exception("Order not found");
+
+            var gateway = _gatewayFactory.Resolve(tenantId);
+
+            var payment = new PaymentRequest
+            {
+                Amount = order.Total,
+                CustomerEmail = order.Email,
+                CustomerName = order.CustomerName,
+                CustomerReference = order.Id.ToString(),
+                CallbackUrl = _config["Payment:OrderCallbackUrl"],
+                ErrorUrl = _config["Payment:ErrorUrl"]
+            };
+
+            var link = await gateway.CreatePaymentLink(payment);
+
+            order.PaymentStatus = "Pending";
+            order.InvoiceId = link.InvoiceId;
+
+            await _context.SaveChangesAsync();
+
+            return link.PaymentUrl;
+        }
+
+
+        //old version happy senario
+        public async Task<bool> HandleOrderCallbackAsync1(string paymentId)
+        {
+            var result = await _myFatoorah.GetPaymentStatus(paymentId);
+
+            if (result.Data.InvoiceStatus != "Paid")
+                return false;
+
+            int orderId = int.Parse(result.Data.CustomerReference);
+
+            var order = await _context.Orders.FindAsync(orderId);
+            if (order == null) return false;
+
+            order.PaymentStatus = "Paid";
+            order.Status = "Confirmed";
+
+            await _context.SaveChangesAsync();
+
+            return true;
+        }
+
+        public async Task<OrderCallbackResult> HandleOrderCallbackAsync(string paymentId)
+        {
+            var status = await _myFatoorah.GetPaymentStatus(paymentId);
+
+            if (status == null || status.Data == null)
+                return OrderCallbackResult.Failed();
+
+            // 1. Check invoice status
+            if (status.Data.InvoiceStatus != "Paid")
+                return OrderCallbackResult.Failed();
+
+            // 2. Extract order ID
+            int orderId = int.Parse(status.Data.CustomerReference);
+
+            var order = await _context.Orders
+                .Include(o => o.Tenant)
+                .FirstOrDefaultAsync(o => o.Id == orderId);
+
+            if (order == null)
+                return OrderCallbackResult.Failed();
+
+            // 3. Idempotency check
+            if (order.PaymentStatus == "Paid")
+                return OrderCallbackResult.AlreadyProcessed(order);
+
+            // 4. Update order
+            order.PaymentStatus = "Paid";
+            order.Status = "Confirmed";
+            order.InvoiceId ??= status.Data.InvoiceId.ToString();
+
+            await _context.SaveChangesAsync();
+
+            return OrderCallbackResult.Success(order);
+        }
+
+        public async Task ProcessWebhookAsync(PaymentWebhookEvent webhook)
+        {
+            var orderId = int.Parse(webhook.ReferenceId.Replace("ORDER-", ""));
+
+            var order = await _context.Orders.FirstOrDefaultAsync(o => o.Id == orderId);
+
+            if (order == null)
+                return;
+
+            // 🔐 Transition Guard
+            if (!IsValidOrderTransition(order.Status, webhook.EventType))
+            {
+                //_logger.LogWarning(
+                //    "Invalid order state transition blocked | Order={OrderId} Current={CurrentStatus} Incoming={IncomingEvent}",
+                //    order.Id,
+                //    order.Status,
+                //    webhook.EventType
+                //);
+                return;
+            }
+
+            switch (webhook.EventType)
+            {
+                case "PaymentPaid":
+
+                    if (order.Status != "Completed")
+                    {
+                        order.Status = "Completed";
+                        order.PaidAt ??= webhook.OccurredAt;
+                    }
+
+                    break;
+
+                case "PaymentFailed":
+                case "PaymentExpired":
+
+                    // Only update if not already completed
+                    if (order.Status != "Completed")
+                    {
+                        order.Status = "Failed";
+                    }
+
+                    break;
+
+                case "PaymentRefunded":
+
+                    if (order.Status == "Completed")
+                    {
+                        order.Status = "Refunded";
+                    }
+
+                    break;
+            }
+
+
+            await _context.SaveChangesAsync();
+        }
+
+
+        private bool IsValidOrderTransition(string currentStatus, string incomingEvent)
+        {
+            if (currentStatus == "Completed")
+                return false; // Completed orders never change
+
+            if (currentStatus == "Failed" && incomingEvent == "PaymentFailed")
+                return false;
+
+            if (currentStatus == "Expired" && incomingEvent == "PaymentExpired")
+                return false;
+
+            return true;
+        }
+
+
+
+
+
     }
 }

@@ -127,7 +127,6 @@ namespace Infrastructure.Services
             {
                 new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
                 new Claim(ClaimTypes.Email, user.Email),
-                new Claim("email", user.Email),
                 new Claim(ClaimTypes.Role, user.Role),
                 new Claim("tenantId", user.TenantId?.ToString() ?? "0"),
                 new Claim("fullName", user.FullName)

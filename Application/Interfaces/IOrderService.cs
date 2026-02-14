@@ -1,4 +1,5 @@
-﻿using Application.DTOs;
+﻿using Application.Common;
+using Application.DTOs;
 using Domain.Entities;
 using System;
 using System.Collections.Generic;
@@ -15,5 +16,9 @@ namespace Application.Interfaces
         Task<IEnumerable<OrderDto>> GetByCustomerMobileAsync(string mobile);
         Task<IEnumerable<Order>> GetAllAsync();
         Task<bool> UpdateOrderStatusAsync(int orderId, string status);
+        Task<string> CreateOrderPaymentLinkAsync(int orderId);
+        Task<OrderCallbackResult> HandleOrderCallbackAsync(string paymentId);
+        Task ProcessWebhookAsync(PaymentWebhookEvent webhookEvent);
+
     }
 }

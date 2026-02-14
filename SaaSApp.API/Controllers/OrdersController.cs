@@ -67,6 +67,37 @@ namespace SaaSApp.API.Controllers
         }
 
 
+        [HttpPost("{orderId}/pay")]
+        public async Task<IActionResult> Pay(int orderId)
+        {
+            var paymentUrl = await _orderService.CreateOrderPaymentLinkAsync(orderId);
+            return Ok(new { paymentUrl });
+        }
+
+
+        [AllowAnonymous]
+        [HttpGet("callback")]
+        public async Task<IActionResult> Callback([FromQuery] string paymentId)
+        {
+            if (string.IsNullOrWhiteSpace(paymentId))
+                return Redirect("http://localhost:4200/payment/failed");
+
+            var result = await _orderService.HandleOrderCallbackAsync(paymentId);
+
+            if (!result.IsSuccess || result.Order == null)
+                return Redirect("http://localhost:4200/payment/failed");
+
+            var slug = result.Order.Tenant?.Subdomain;
+            var orderId = result.Order.Id;
+
+            return Redirect(
+                $"http://localhost:4200/site/{slug}/success/{orderId}"
+            );
+        }
+
+
+
+
 
 
     }

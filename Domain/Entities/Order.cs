@@ -19,8 +19,10 @@ namespace Domain.Entities
         public string Mode { get; set; } = "Pickup";
         public decimal Total { get; set; }
         public string Status { get; set; } = "Pending";
-        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-
+        public DateTime CreatedAt { get; set; } = DateTime.Now;
+        public DateTime? PaidAt { get; set; } = DateTime.Now;
+        public string? PaymentStatus { get; set; } // Pending, Paid, Failed
+        public string? InvoiceId { get; set; }
         public Tenant? Tenant { get; set; }
         public User? Customer { get; set; }
         public ICollection<OrderItem> Items { get; set; } = new List<OrderItem>();

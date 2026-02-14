@@ -37,9 +37,9 @@ public class TemplateDraftController : ControllerBase
             return Ok(result);
 
         }
-        catch (Exception ex) { 
-            
-        throw ex;
+        catch (Exception ex) {
+
+            throw;//ex todo;
 
         }
 
